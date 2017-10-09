@@ -1,0 +1,33 @@
+﻿La génération a démarré 09/10/2017 18:03:46.
+     1>Projet "C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\DLL\MLDll\MLDll\MLDll.vcxproj" sur le nœud 2 (build cible(s)).
+     1>InitializeBuildStatus:
+         Création de "Debug\MLDll.unsuccessfulbuild", car "AlwaysCreate" a été spécifié.
+       ClCompile:
+         Toutes les sorties sont à jour.
+         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _USRDLL /D MLDLL_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"StdAfx.h" /Fp"Debug\MLDll.pch" /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt TestCppLibrary.cpp
+         TestCppLibrary.cpp
+     1>c:\users\anthony\documents\esgi\5a djv\machine learning\dll\mldll\mldll\testcpplibrary.cpp(8): warning C4273: 'TestMultiply' : liaison DLL incohérente
+                 c:\users\anthony\documents\esgi\5a djv\machine learning\dll\mldll\mldll\testcpplibrary.h(10) : voir la définition précédente de 'TestMultiply'
+     1>c:\users\anthony\documents\esgi\5a djv\machine learning\dll\mldll\mldll\testcpplibrary.cpp(13): warning C4273: 'TestDivide' : liaison DLL incohérente
+                 c:\users\anthony\documents\esgi\5a djv\machine learning\dll\mldll\mldll\testcpplibrary.h(11) : voir la définition précédente de 'TestDivide'
+       ManifestResourceCompile:
+         Toutes les sorties sont à jour.
+       Link:
+         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\DLL\MLDll\Debug\MLDll.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\MLDll.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\DLL\MLDll\Debug\MLDll.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\DLL\MLDll\Debug\MLDll.lib" /MACHINE:X86 /DLL Debug\MLDll.dll.embed.manifest.res
+         Debug\stdafx.obj
+         Debug\TestCppLibrary.obj
+            Création de la bibliothèque C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\DLL\MLDll\Debug\MLDll.lib et de l'objet C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\DLL\MLDll\Debug\MLDll.exp
+       Manifest:
+         c:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /out:"Debug\MLDll.dll.embed.manifest" /manifest Debug\MLDll.dll.intermediate.manifest
+         Toutes les sorties sont à jour.
+       LinkEmbedManifest:
+         Toutes les sorties sont à jour.
+         MLDll.vcxproj -> C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\DLL\MLDll\Debug\MLDll.dll
+       FinalizeBuildStatus:
+         Suppression du fichier "Debug\MLDll.unsuccessfulbuild".
+         Mise à jour de l'horodatage "Debug\MLDll.lastbuildstate".
+     1>Génération du projet "C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\DLL\MLDll\MLDll\MLDll.vcxproj" terminée (build cible(s)).
+
+La génération a réussi.
+
+Temps écoulé 00:00:00.59

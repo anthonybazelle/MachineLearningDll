@@ -1,0 +1,10 @@
+﻿  TestCppLibrary.cpp
+c:\users\anthony\documents\esgi\5a djv\machine learning\mldll\dll\mldll\testcpplibrary.cpp(9): warning C4273: 'TestMultiply' : liaison DLL incohérente
+  c:\users\anthony\documents\esgi\5a djv\machine learning\mldll\dll\mldll\testcpplibrary.h(10): note: voir la définition précédente de 'TestMultiply'
+c:\users\anthony\documents\esgi\5a djv\machine learning\mldll\dll\mldll\testcpplibrary.cpp(14): warning C4273: 'TestDivide' : liaison DLL incohérente
+  c:\users\anthony\documents\esgi\5a djv\machine learning\mldll\dll\mldll\testcpplibrary.h(11): note: voir la définition précédente de 'TestDivide'
+c:\users\anthony\documents\esgi\5a djv\machine learning\mldll\dll\mldll\testcpplibrary.cpp(23): warning C4273: 'TestString' : liaison DLL incohérente
+  c:\users\anthony\documents\esgi\5a djv\machine learning\mldll\dll\mldll\testcpplibrary.h(12): note: voir la définition précédente de 'TestString'
+     CrÚation de la bibliothÞque C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\MLDll\DLL\x64\Debug\MLDll.lib et de l'objet C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\MLDll\DLL\x64\Debug\MLDll.exp
+  MLDll.vcxproj -> C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\MLDll\DLL\x64\Debug\MLDll.dll
+  MLDll.vcxproj -> C:\Users\Anthony\Documents\ESGI\5A DJV\Machine Learning\MLDll\DLL\x64\Debug\MLDll.pdb (Full PDB)
