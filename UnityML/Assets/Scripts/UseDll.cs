@@ -13,8 +13,8 @@ public class UseDll : MonoBehaviour {
     [DllImport("MLDll", EntryPoint = "TestMultiply")]
     public static extern float StraightFromDllTestMultiply(float a, float b);
 
-    [DllImport("MLDll", EntryPoint = "TestString")]
-    public static extern StringBuilder StraightFromDllTestString(StringBuilder c);
+    /*[DllImport("MLDll", EntryPoint = "TestString")]
+    public static extern StringBuilder StraightFromDllTestString(StringBuilder c);*/
 
     // Use this for initialization
     void Start () {
@@ -22,19 +22,19 @@ public class UseDll : MonoBehaviour {
         float straightFromDllDivideResult = StraightFromDllTestDivide(20, 5);
         float straightFromDllMultiplyResult = StraightFromDllTestMultiply(20, 5);
         StringBuilder sb = new StringBuilder("Anthony");
-        StringBuilder straightFromDllStringResult = StraightFromDllTestString(sb);
+       // StringBuilder straightFromDllStringResult = StraightFromDllTestString(sb);
 
         // Print it out to the console
         Debug.Log(straightFromDllDivideResult);
         Debug.Log(straightFromDllMultiplyResult);
-        Debug.Log(straightFromDllStringResult);
+        //Debug.Log(straightFromDllStringResult);
 
         // Write the result into a file, so we can even see it working in a build
         using (StreamWriter writer = new StreamWriter("debug.txt", true))
         {
             writer.WriteLine(straightFromDllDivideResult);
             writer.WriteLine(straightFromDllMultiplyResult);
-            writer.WriteLine(straightFromDllStringResult);
+            //writer.WriteLine(straightFromDllStringResult);
         }
     }
 
