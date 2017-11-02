@@ -9,7 +9,5 @@
 extern "C" {
     TESTFUNCDLL_API float TestMultiply(float a, float b);
     TESTFUNCDLL_API float TestDivide(float a, float b);
-	TESTFUNCDLL_API bool TestString(TCHAR* c);
-	TESTFUNCDLL_API char* __stdcall StringReturnAPI01();
-	TESTFUNCDLL_API double* LinearRegression(int* xCollection, int* yCollection, int dataSize);
+	TESTFUNCDLL_API float VerifLinearRegression(float* xCollection, float* yCollection, int dataSize);
 }

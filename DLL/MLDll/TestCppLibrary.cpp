@@ -18,15 +18,8 @@ extern "C" {
 
         return a / b;
     }
-
-	bool TestString(TCHAR* c)
-	{
-		char* example = "example";
-		c = (TCHAR*)example;
-		return true;
-	}
 	
-	double* LinearRegression(int* xCollection, int* yCollection, int dataSize)
+	float VerifLinearRegression(float* xCollection, float* yCollection, int dataSize)
 	{
 		if (xCollection == NULL || yCollection == NULL || dataSize == 0)
 		{
@@ -34,14 +27,14 @@ extern "C" {
 			return NULL;
 		}
 
-		double SUMx = 0;     //sum of x values
-		double SUMy = 0;     //sum of y values
-		double SUMxy = 0;    //sum of x * y
-		double SUMxx = 0;    //sum of x^2
-		double slope = 0;    //slope of regression line
-		double y_intercept = 0; //y intercept of regression line
-		double AVGy = 0;     //mean of y
-		double AVGx = 0;     //mean of x
+		float SUMx = 0;     //sum of x values
+		float SUMy = 0;     //sum of y values
+		float SUMxy = 0;    //sum of x * y
+		float SUMxx = 0;    //sum of x^2
+		float slope = 0;    //slope of regression line
+		float y_intercept = 0; //y intercept of regression line
+		float AVGy = 0;     //mean of y
+		float AVGx = 0;     //mean of x
 
 		for (int i = 0; i < dataSize; i++)
 		{
@@ -67,15 +60,21 @@ extern "C" {
 
 		// slope * x + y_intercept = y
 
-		double result[2] = { slope, y_intercept };
+		float result[2] = { slope, y_intercept };
 
-		return result;
+		return result[0];
 	}
 
-	char* __stdcall StringReturnAPI01()
+	// Initialiser chaque poids pour chaque valeur
+	// Passer la matrice Entree / matrice Resultat / Le pas pour maj du poids
+	// Transformer les matrices en matrice pseudo inverse avec la lib Eigen
+	// Algo Rosenblatt (On compare à chaque iteration la matrice resultat attendue et la matrice entrée modifiée, 
+	// si les deux matrices sont différentes, on mets à jour les poids)
+
+	
+	
+	float* PerceptronRosenblatt(float* inputs, float* outputs, float* weights,int sizeInput, float step)
 	{
-		return "Hello";
+
 	}
-
-
 }
