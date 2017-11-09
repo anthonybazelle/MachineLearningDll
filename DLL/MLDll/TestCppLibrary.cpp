@@ -8,19 +8,19 @@
 
 extern "C" {
 
-    float TestMultiply(float a, float b)
-    {
-        return a * b;
-    }
+	float TestMultiply(float a, float b)
+	{
+		return a * b;
+	}
 
-    float TestDivide(float a, float b)
-    {
-        if (b == 0) {
-            return 0;
-        }
+	float TestDivide(float a, float b)
+	{
+		if (b == 0) {
+			return 0;
+		}
 
-        return a / b;
-    }
+		return a / b;
+	}
 
 	int makeRandomWeight(float* weights)
 	{
@@ -40,7 +40,7 @@ extern "C" {
 
 		return 0.f;
 	}
-	
+
 	float LinearRegression(float* xCollection, float* yCollection, int dataSize)
 	{
 		if (xCollection == NULL || yCollection == NULL || dataSize == 0)
@@ -93,7 +93,7 @@ extern "C" {
 	// Transformer les matrices en matrice pseudo inverse avec la lib Eigen
 	// Algo Rosenblatt (On compare à chaque iteration la matrice resultat attendue et la matrice entrée modifiée, 
 	// si les deux matrices sont différentes, on mets à jour les poids)
-	
+
 
 	/// Parameters : 
 	// inputs : corresponding to input parameters 
@@ -125,17 +125,51 @@ extern "C" {
 			nativeInputs.push_back(sample);
 		}
 
-		// Here we'll update weights of parameters
-		// Loop sample
-		for (int i = 0; i < nativeInputs.size(); ++i)
+		bool different = true;
+		int iteration = 0;
+
+		while(iteration < nbIteration && different)
 		{
-			// Loop parameter of sample and update weight like this formula: (w1 * x1) + (w2 * x2) - w0 (-w0 because we chose x0 = - 1)
-			// Logicaly the number of weight correspond to the number of parameter in a sample so we stop the loop when we are out of the number of weight
-			for(int j = 0; j < countWeight; ++j)
+			// Here we'll update weights of parameters
+			// Loop sample
+			std::vector<float> realResult;
+
+			// bias ? not sure
+			float w0 = -1 + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(1-(-1))));
+
+			for (int i = 0; i < nativeInputs.size(); ++i)
 			{
+				// Logicaly the number of weight correspond to the number of parameter in a sample so we stop the loop when we are out of the number of weight
+				// formula: (w1 * x1) + (w2 * x2) - w0 (-w0 because we chose x0 = - 1) when the two vector are different
+				float result = 0.f;
 
+				for(int j = 0; j < countWeight; ++j)
+				{
+					result += nativeInputs[i]->getParameters()[j] * weights[j];
+				}
+				result -= w0;
+
+				realResult.push_back(result);
 			}
-		}
 
+			// Push float* in a vector to make the comparison between real result and expecte result easier
+			std::vector<float> expectedResult;
+			for(int i = 0; i < nativeInputs.size(); ++i)
+			{
+				expectedResult.push_back(expected[i]);
+			}
+
+			// Comparision between two vector we'll first, check the size of the two vector, and if they have the same size, compare value by value
+			if(expectedResult == realResult)
+			{
+				different = false;
+			}
+			else
+			{
+				// TODO : Update weight in else
+			}
+
+			++iteration;
+		}
 	}
 }
