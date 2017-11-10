@@ -8,6 +8,27 @@
 
 extern "C" {
 
+
+	struct Sample{
+
+	private:
+		std::vector<float> parameters;
+
+		float expected;
+
+	public :
+		Sample(std::vector<float> parameters, float expected)
+		{
+			this->parameters = parameters;
+			this->expected = expected;
+		}
+
+		std::vector<float> getParameters() { return this->parameters; }
+		float getExpected() { return this->expected; }
+
+		void setExpected(float expected) { this->expected = expected; }
+	};
+
 	float TestMultiply(float a, float b)
 	{
 		return a * b;
@@ -168,8 +189,13 @@ extern "C" {
 			}
 			else
 			{
-				// TODO : Update weight
-
+				for(int indexSample = 0; indexSample < nativeInputs.size(); ++indexSample)
+				{
+					for (int i = 0; i < countWeight; ++i)
+					{
+						weights[i] = weights[i] + stepLearning * (expected[nbSample] - realResultTmp[nbSample]) * inputs[i + nbSample] / 2;
+					}
+				}
 			}
 
 			++iteration;
