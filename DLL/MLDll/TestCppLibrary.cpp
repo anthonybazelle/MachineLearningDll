@@ -107,7 +107,7 @@ extern "C" {
 	// With this function, the number of parameter doesn't matter! 
 	float* PerceptronRosenblatt(float* inputs, float* expected, float* weights, int nbParameters,int nbSample, float stepLearning, int nbIteration)
 	{
-		// Initialize weight
+		// Initialize weight with random between -1 and 1, or just initialize 0 maybe ?
 		int countWeight = makeRandomWeight(weights);
 
 		// Initialize array of sample given in input with the expected value in output for each sample in third parameter of sample's constructor
@@ -127,12 +127,13 @@ extern "C" {
 
 		bool different = true;
 		int iteration = 0;
+		std::vector<float> realResult;
 
 		while(iteration < nbIteration && different)
 		{
 			// Here we'll update weights of parameters
 			// Loop sample
-			std::vector<float> realResult;
+			std::vector<float> realResultTmp;
 
 			// bias ? not sure
 			float w0 = -1 + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(1-(-1))));
@@ -149,7 +150,7 @@ extern "C" {
 				}
 				result -= w0;
 
-				realResult.push_back(result);
+				realResultTmp.push_back(result);
 			}
 
 			// Push float* in a vector to make the comparison between real result and expecte result easier
@@ -160,16 +161,22 @@ extern "C" {
 			}
 
 			// Comparision between two vector we'll first, check the size of the two vector, and if they have the same size, compare value by value
-			if(expectedResult == realResult)
+			if(expectedResult == realResultTmp)
 			{
 				different = false;
+				realResult = realResultTmp;
 			}
 			else
 			{
-				// TODO : Update weight in else
+				// TODO : Update weight
+
 			}
 
 			++iteration;
 		}
+
+		float* result = &(realResult[0]);
+
+		return result;
 	}
 }
