@@ -5,6 +5,7 @@
 #include <string>
 #include <Eigen/Dense>
 #include <vector>
+#include <iostream>
 
 extern "C" {
 
@@ -202,6 +203,25 @@ extern "C" {
 		}
 
 		float* result = &(realResult[0]);
+
+		return result;
+	}
+
+
+	// Test marshalling
+	int* TestRefArrayOfInts(int** ppArray, int* pSize)
+	{
+		int* result = new int[2];
+		result[0] = 0;
+		for(int i = 0; i < 10; ++i)
+		{
+			std::cout << (*ppArray)[i];
+			result[0] = result[0] + 2;
+			std::cout << "      SUM : " << result[0] << std::endl;
+		}
+
+		std::cout << result[0] << std::endl;
+		result[1] = 32;
 
 		return result;
 	}
