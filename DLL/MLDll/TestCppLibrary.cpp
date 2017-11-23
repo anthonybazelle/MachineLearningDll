@@ -6,18 +6,19 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <iostream>
+#include <math.h>
 
 extern "C" {
 
 
-	struct Sample{
+	struct Sample {
 
 	private:
 		std::vector<float> parameters;
 
 		float expected;
 
-	public :
+	public:
 		Sample(std::vector<float> parameters, float expected)
 		{
 			this->parameters = parameters;
@@ -47,9 +48,9 @@ extern "C" {
 	int makeRandomWeight(float* weights)
 	{
 		int i = 0;
-		while(weights[i] != NULL)
+		while (weights[i] != NULL)
 		{
-			weights[i] =  -1 + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(1-(-1))));
+			weights[i] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1 - (-1))));
 			++i;
 		}
 
@@ -127,7 +128,7 @@ extern "C" {
 	// nbIteration : we need this because, if inputs can't be "lineary resolvable", we'll have an infinite loop. Need to be parametizable in Unity
 
 	// With this function, the number of parameter doesn't matter! 
-	float* PerceptronRosenblatt(float* inputs, float* expected, float* weights, int nbParameters,int nbSample, float stepLearning, int nbIteration)
+	float* PerceptronRosenblatt(float* inputs, float* expected, float* weights, int nbParameters, int nbSample, float stepLearning, int nbIteration, float tolerance)
 	{
 		// Initialize weight with random between -1 and 1, or just initialize 0 maybe ?
 		int countWeight = makeRandomWeight(weights);
@@ -137,7 +138,7 @@ extern "C" {
 		for (int i = 0; i < nbSample; ++i)
 		{
 			std::vector<float> parameters;
-			for(int j = 0; j < nbParameters; ++j)
+			for (int j = 0; j < nbParameters; ++j)
 			{
 				parameters.push_back(inputs[j + i]);
 			}
@@ -147,34 +148,52 @@ extern "C" {
 			nativeInputs.push_back(sample);
 		}
 
+		// bias ? not sure
+		float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2));
+
 		bool different = true;
 		int iteration = 0;
 		std::vector<float> realResult;
 
-		while(iteration < nbIteration && different)
+		while (iteration < nbIteration && different)
 		{
 			// Here we'll update weights of parameters
 			// Loop sample
-			std::vector<float> realResultTmp;
+			//std::vector<float> realResultTmp;
 
-			// bias ? not sure
-			float w0 = -1 + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(1-(-1))));
+			bool needToContinue = false;
 
-			for (int i = 0; i < nativeInputs.size(); ++i)
+			for (int i = 0; i < nbSample; ++i)
 			{
 				// Logicaly the number of weight correspond to the number of parameter in a sample so we stop the loop when we are out of the number of weight
 				// formula: (w1 * x1) + (w2 * x2) - w0 (-w0 because we chose x0 = - 1) when the two vector are different
 				float result = 0.f;
 
-				for(int j = 0; j < countWeight; ++j)
+				for (int j = 0; j < countWeight; ++j)
 				{
 					result += nativeInputs[i]->getParameters()[j] * weights[j];
 				}
 				result -= w0;
 
-				realResultTmp.push_back(result);
+				if (std::abs(result - nativeInputs[i]->getExpected()) > tolerance)
+				{
+					needToContinue = true;
+					for (int j = 0; j < countWeight; ++j)
+					{
+						weights[j] = weights[j] + stepLearning * (expected[i] - result) * inputs[j + i * nbParameters];
+					}
+				}
 			}
 
+			if (!needToContinue)
+			{
+				break;
+			}
+
+			++iteration;
+
+
+			/*
 			// Push float* in a vector to make the comparison between real result and expecte result easier
 			std::vector<float> expectedResult;
 			for(int i = 0; i < nativeInputs.size(); ++i)
@@ -194,12 +213,11 @@ extern "C" {
 				{
 					for (int i = 0; i < countWeight; ++i)
 					{
-						weights[i] = weights[i] + stepLearning * (expected[nbSample] - realResultTmp[nbSample]) * inputs[i + nbSample] / 2;
+						weights[i] = weights[i] + stepLearning * (expected[nbSample] - realResultTmp[nbSample]) * inputs[i + indexSample * nbParameters];
 					}
 				}
 			}
-
-			++iteration;
+			++iteration;*/
 		}
 
 		float* result = &(realResult[0]);
@@ -213,7 +231,7 @@ extern "C" {
 	{
 		int* result = new int[2];
 		result[0] = 0;
-		for(int i = 0; i < 10; ++i)
+		for (int i = 0; i < 10; ++i)
 		{
 			std::cout << (*ppArray)[i];
 			result[0] = result[0] + 2;
