@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <math.h>
+#include <fstream>
 
 extern "C" {
 
@@ -64,7 +65,7 @@ extern "C" {
 		return 0.f;
 	}
 
-	float LinearRegression(float* xCollection, float* yCollection, int dataSize)
+	float* LinearRegression(float* xCollection, float* yCollection, int dataSize)
 	{
 		if (xCollection == NULL || yCollection == NULL || dataSize == 0)
 		{
@@ -100,15 +101,22 @@ extern "C" {
 		//slope
 		slope = (dataSize * SUMxy - SUMx * SUMy) / (dataSize * SUMxx - SUMx*SUMx);
 
+		//std::cout << "Slope in DLL : " << slope << std::endl << std::endl;
 		//y itercept
 		y_intercept = AVGy - slope * AVGx;
 
+		std::ofstream logFile;
+		logFile.open("logFileDll.log");
+		logFile << "In DLL : " << std::endl << std::endl << "DataSize in DLL : " << dataSize << std::endl <<"AVGy : " << AVGy << std::endl << "AVGx : " << AVGx << std::endl<< std::endl << "y_intercept : " << y_intercept << std::endl << "Slope : " << slope << std::endl;
+		logFile.close();
+
 		// slope * x + y_intercept = y
 
-		float result[2] = { slope, y_intercept };
+		float* result = new float[2];
+		result[0] = slope;
+		result[1] = y_intercept;
 
-		// TODO : Return the whole array and notonly the first row
-		return result[0];
+		return result;
 	}
 
 	// Initialiser chaque poids pour chaque valeur
@@ -291,7 +299,7 @@ extern "C" {
 				//pour chaque paramètre (plus neurone de biais) on ajoute les entrées dans le vecteur des x_li
 				for (int j = 0; j < nbParameters + 1; ++j)
 				{
-					x_li.push_back(nativeInputs[i]->getParameters[j]);		//chaque entrée
+					x_li.push_back(nativeInputs[i]->getParameters()[j]);		//chaque entrée
 				}
 				x_li.push_back(-1);										//neurone de biais
 
@@ -484,9 +492,9 @@ extern "C" {
 	}
 
 	// Test marshalling
-	int* TestRefArrayOfInts(int** ppArray, int* pSize)
+	float* TestRefArrayOfInts(int** ppArray, int* pSize)
 	{
-		int* result = new int[2];
+		float* result = new float[2];
 		result[0] = 0;
 		for (int i = 0; i < 10; ++i)
 		{
@@ -496,7 +504,7 @@ extern "C" {
 		}
 
 		std::cout << result[0] << std::endl;
-		result[1] = 32;
+		result[1] = 32.5f;
 
 		return result;
 	}
