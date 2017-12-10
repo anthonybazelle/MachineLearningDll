@@ -43,6 +43,7 @@ public class UseDll : MonoBehaviour
 
     private float weightX = 0.0f;
     private float weightY = 0.0f;
+    private float weightBias = 0.0f;
     #endregion
 
 
@@ -113,13 +114,14 @@ public class UseDll : MonoBehaviour
             Marshal.Copy(weights, 0, bufferWeights, weights.Length);
 
             IntPtr result = GetLinearClassifierFunction(bufferInputs, bufferExpected, bufferWeights, this.nbParameterClassifier, this.cubeClassifier.Length, this.stepLearningClassifier, this.nbIterationClassifier, this.toleranceClassifier);
-            float[] resultLinearClassifier = new float[this.nbParameterClassifier];
-            Marshal.Copy(result, resultLinearClassifier, 0, this.nbParameterClassifier);
+            float[] resultLinearClassifier = new float[this.nbParameterClassifier + 1]; // +1 for bias
+            Marshal.Copy(result, resultLinearClassifier, 0, this.nbParameterClassifier + 1); 
 
             this.weightX = resultLinearClassifier[0];
             this.weightY = resultLinearClassifier[1];
+            this.weightBias = resultLinearClassifier[2];
 
-            Debug.Log("Formula : " + resultLinearClassifier[0] + "x + " + resultLinearClassifier[1] + "y  ????");
+            //Debug.Log("Formula : " + resultLinearClassifier[0] + "x + " + resultLinearClassifier[1] + "y  ????");
         }
     }
 
@@ -135,8 +137,18 @@ public class UseDll : MonoBehaviour
         }
         else if (this.cubeClassifier.Length > 2)
         {
-            // for x = 50 and y = 50 and x = -50 and y = -50
-            Debug.DrawLine(new Vector3(-5 * this.weightX, -5 * this.weightY, 0), new Vector3(5 * this.weightX, 5 * this.weightY, 0), Color.green);
+            // for x = -10 and x = -10 
+
+            float x1 = -10;
+            float y1 = -(x1 * this.weightX / this.weightY) - ((-1 * this.weightBias) / this.weightY);
+
+            float x2 = 10;
+            float y2 = -(x2 * this.weightX / this.weightY) + (this.weightBias / this.weightY);
+
+            Vector3 p1 = new Vector3(-10, y1);
+            Vector3 p2 = new Vector3(10, y2);
+
+            Debug.DrawLine(p1, p2, Color.green);
         }
     }
 }

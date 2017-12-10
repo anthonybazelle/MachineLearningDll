@@ -147,6 +147,9 @@ extern "C" {
 		// Initialize weight with random between -1 and 1, or just initialize 0 maybe ?
 		int countWeight = makeRandomWeight(weights);
 
+		// bias
+		float x0 = -1;
+
 		// Initialize array of sample given in input with the expected value in output for each sample in third parameter of sample's constructor
 		std::vector<Sample*> nativeInputs;
 		for (int i = 0; i < nbSample; ++i)
@@ -199,6 +202,9 @@ extern "C" {
 						weights[j] = weights[j] + stepLearning * (expected[i] - result) * inputs[j + i * nbParameters];
 					}
 
+					// We forgot to update bias weight before
+					w0 = w0 + stepLearning * (expected[i] - result) * x0;
+
 					for(int i = 0; i < nbParameters; ++i)
 					{
 						logFile << "Weight " << i << " : " << weights[i] << std::endl;
@@ -250,9 +256,19 @@ extern "C" {
 			logFile << "Weight " << i << " : " << weights[i] << std::endl;
 		}
 
+		//weights
 		//float* result = &(realResult[0]);
 
-		return weights;
+		float* resultWeight = new float[nbParameters + 1];
+		
+		for(int i = 0; i < nbParameters; ++i)
+		{
+			resultWeight[i] = weights[i];
+		}
+
+		resultWeight[nbParameters] = w0;
+
+		return resultWeight;
 	}
 
 
