@@ -136,8 +136,14 @@ extern "C" {
 	// nbIteration : we need this because, if inputs can't be "lineary resolvable", we'll have an infinite loop. Need to be parametizable in Unity
 
 	// With this function, the number of parameter doesn't matter! 
+
+	// Weigths in parameters useless, need to be modify later
 	float* PerceptronRosenblatt(float* inputs, float* expected, float* weights, int nbParameters, int nbSample, float stepLearning, int nbIteration, float tolerance)
 	{
+
+		std::ofstream logFile;
+		logFile.open("logFileDll.log");
+		logFile << "Start RosenBlatt Perceptron : " << std::endl << std::endl << std::endl;
 		// Initialize weight with random between -1 and 1, or just initialize 0 maybe ?
 		int countWeight = makeRandomWeight(weights);
 
@@ -155,6 +161,8 @@ extern "C" {
 
 			nativeInputs.push_back(sample);
 		}
+
+		logFile << "Initialize sample : DONE" << std::endl << std::endl;
 
 		// bias ? not sure
 		float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2));
@@ -190,6 +198,13 @@ extern "C" {
 					{
 						weights[j] = weights[j] + stepLearning * (expected[i] - result) * inputs[j + i * nbParameters];
 					}
+
+					for(int i = 0; i < nbParameters; ++i)
+					{
+						logFile << "Weight " << i << " : " << weights[i] << std::endl;
+					}
+
+					logFile << std::endl;
 				}
 			}
 
@@ -206,31 +221,38 @@ extern "C" {
 			std::vector<float> expectedResult;
 			for(int i = 0; i < nativeInputs.size(); ++i)
 			{
-				expectedResult.push_back(expected[i]);
+			expectedResult.push_back(expected[i]);
 			}
 
 			// Comparision between two vector we'll first, check the size of the two vector, and if they have the same size, compare value by value
 			if(expectedResult == realResultTmp)
 			{
-				different = false;
-				realResult = realResultTmp;
+			different = false;
+			realResult = realResultTmp;
 			}
 			else
 			{
-				for(int indexSample = 0; indexSample < nativeInputs.size(); ++indexSample)
-				{
-					for (int i = 0; i < countWeight; ++i)
-					{
-						weights[i] = weights[i] + stepLearning * (expected[nbSample] - realResultTmp[nbSample]) * inputs[i + indexSample * nbParameters];
-					}
-				}
+			for(int indexSample = 0; indexSample < nativeInputs.size(); ++indexSample)
+			{
+			for (int i = 0; i < countWeight; ++i)
+			{
+			weights[i] = weights[i] + stepLearning * (expected[nbSample] - realResultTmp[nbSample]) * inputs[i + indexSample * nbParameters];
+			}
+			}
 			}
 			++iteration;*/
 		}
 
-		float* result = &(realResult[0]);
+		logFile << "Whole necessary iteration (" << iteration <<") : DONE" << std::endl;
 
-		return result;
+		for(int i = 0; i < nbParameters; ++i)
+		{
+			logFile << "Weight " << i << " : " << weights[i] << std::endl;
+		}
+
+		//float* result = &(realResult[0]);
+
+		return weights;
 	}
 
 
@@ -265,7 +287,7 @@ extern "C" {
 			{
 				parameters.push_back(inputs[j + i * nbParameters]);
 			}
-			
+
 			Sample* sample = new Sample(parameters, expected[i]);
 			nativeInputs.push_back(sample);
 		}
@@ -447,47 +469,47 @@ extern "C" {
 		/*
 		C'est éminemment le bordel niveau index des vecteurs, mais ce qu'il faut comprendre c'est que : 
 		- weights doit être rangé de la sorte : 
-			_ [w_000, w_001, w_002, ..., w_010, w_011, ..., w_100, w_101, ...]
-			_ avec w_lij où l est le numéro de la couche, i est le numéro du neurone vers lequel pointe le poids et j est le numéro du neurone pointant vers i
-			_ pour chaque neurone donc se suivront les poids de tous les neurones de la couche d'avant allant vers lui
+		_ [w_000, w_001, w_002, ..., w_010, w_011, ..., w_100, w_101, ...]
+		_ avec w_lij où l est le numéro de la couche, i est le numéro du neurone vers lequel pointe le poids et j est le numéro du neurone pointant vers i
+		_ pour chaque neurone donc se suivront les poids de tous les neurones de la couche d'avant allant vers lui
 		- x_li correspond au résultat de chaque neurone vu par les autres, c'est-à-dire :
-			- pour l = 0, ce sera juste les paramètres tels quels
-			_ après, ce sera la sigmoïde (tanh) de la somme des w * x de la couche d'avant
-			_ le dernier x_li correspond au résultat final du perceptron
+		- pour l = 0, ce sera juste les paramètres tels quels
+		_ après, ce sera la sigmoïde (tanh) de la somme des w * x de la couche d'avant
+		_ le dernier x_li correspond au résultat final du perceptron
 		- x_li est rangé dans l'ordre des neurones c'est-à-dire : 
-			_ [x_00, x_01, x_02, ..., x_10, x_11, ...]
-			_ avec x_li où l est le numéro de la couche (démarrant à la couche des paramètres + 1 avec le biais)
-			_ et i et le numéro du neurone dans la couche l
+		_ [x_00, x_01, x_02, ..., x_10, x_11, ...]
+		_ avec x_li où l est le numéro de la couche (démarrant à la couche des paramètres + 1 avec le biais)
+		_ et i et le numéro du neurone dans la couche l
 		- d_li est le delta de chacun des neurones, mais pris à l'envers car parcouru depuis la fin lors du calcul
-			_ [d, d_(L)(N1), d_(L)(N1-1), ..., d_(L)(0), d_(L-1)(N2), ..., d_00]
-			_ avec d_li où l est le numéro de la couche parcourue jusqu'à la première car les entrées n'ont pas de delta (pas d'erreur sur les entrées logique)
-			_ et i est le numéro du neurone de la couche parcourue
+		_ [d, d_(L)(N1), d_(L)(N1-1), ..., d_(L)(0), d_(L-1)(N2), ..., d_00]
+		_ avec d_li où l est le numéro de la couche parcourue jusqu'à la première car les entrées n'ont pas de delta (pas d'erreur sur les entrées logique)
+		_ et i est le numéro du neurone de la couche parcourue
 		- d_li est donc parcouru dans le sens inverse de x_li et à chaque x_li (hormis pour les entrées) correspond un d_li
-		
+
 		- Concernant "counter" : 
-			_ counter permet de parcourir les poids dans l'ordre pour le calcul des x_li
-			_ à la fin du calcul des x_li, counter est normalement au tout dernier poids
-			_ on reparcoure les poids dans l'autre sens pour calculer les d_li de chaque neurone
-			_ enfin on reparcoure les poids dans l'ordre pour les mettre à jour
+		_ counter permet de parcourir les poids dans l'ordre pour le calcul des x_li
+		_ à la fin du calcul des x_li, counter est normalement au tout dernier poids
+		_ on reparcoure les poids dans l'autre sens pour calculer les d_li de chaque neurone
+		_ enfin on reparcoure les poids dans l'ordre pour les mettre à jour
 
 		- Concernent "nbx" :
-			_ il permet lors du calcul des x_li de ne parcourir que les neurones de la couche précédente
-			_ à la fin du calcul des x_li de chaque couche, on ajoute à nbx le nombre de neurones de la couche d'avant
+		_ il permet lors du calcul des x_li de ne parcourir que les neurones de la couche précédente
+		_ à la fin du calcul des x_li de chaque couche, on ajoute à nbx le nombre de neurones de la couche d'avant
 
 		- Concernant "nbd" : 
-			_ il fonctionne exactement de la même manière que nbx mais pour les d_li
+		_ il fonctionne exactement de la même manière que nbx mais pour les d_li
 
 		- Concernant "nox" :
-			_ il permet de reparcourir le vecteur des x_li dans l'autre sens pour le calcul des d_li
-			_ à la fin du calcul des d_li, nox est normalement à 0 puisqu'on à reparcouru tous les x_li pour calculer les d_li correspondants
-			_ pour la mise à jour des poids, il sert à parcourir les x_li et d_li :
-				~ pour les x_li, il nous faut les x_li de la couche précédente participant à un neurone de la couche en cours
-				~ on parcoure donc x_li[nox + k] avec k allant de 0 au nombre de neurones de la couche précédente
-				~ et nox étant égal pour une couche donnée à la somme du nombre de neurones sur toutes les couches précédentes
-				~ pour démarrer au bon neurone
+		_ il permet de reparcourir le vecteur des x_li dans l'autre sens pour le calcul des d_li
+		_ à la fin du calcul des d_li, nox est normalement à 0 puisqu'on à reparcouru tous les x_li pour calculer les d_li correspondants
+		_ pour la mise à jour des poids, il sert à parcourir les x_li et d_li :
+		~ pour les x_li, il nous faut les x_li de la couche précédente participant à un neurone de la couche en cours
+		~ on parcoure donc x_li[nox + k] avec k allant de 0 au nombre de neurones de la couche précédente
+		~ et nox étant égal pour une couche donnée à la somme du nombre de neurones sur toutes les couches précédentes
+		~ pour démarrer au bon neurone
 
-				~ pour les d_li c'est plus simple, il nous faut juste le neurone parcouru sur la couche en cours
-				~ donc on a d_li[d_li.size() - (nox + 1 + j)] avec j allant de 0 au nombre de neurones sur la couche en cours
+		~ pour les d_li c'est plus simple, il nous faut juste le neurone parcouru sur la couche en cours
+		~ donc on a d_li[d_li.size() - (nox + 1 + j)] avec j allant de 0 au nombre de neurones sur la couche en cours
 		*/
 	}
 
