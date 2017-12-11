@@ -59,14 +59,19 @@ extern "C" {
 		return i;
 	}
 
-	float LinearRegressionWithEigen(float* xCollection, float* yCollection, const int nbXCollection, const int nbYCollection)
+	float* LinearRegressionWithEigen(float* inputs, float* zBuffer, const int nbParameter, const int nbSample)
 	{
-		Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> >  matX(xCollection, nbXCollection, 1);
-		Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> >  matY(yCollection, nbYCollection, 1);
+		Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> > matInputs(inputs, nbSample, nbParameter);
+		Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> > matZBuffer(zBuffer, nbSample, 1);
 
-		//mat.completeOrthogonalDecomposition().pseudoInverse();
+		// W = ((X^T X)^-1 X^T)Y
+		Eigen::Transpose<Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> > > inputsTranspose = matInputs.transpose();
+		auto result = ((inputsTranspose * matInputs).completeOrthogonalDecomposition().pseudoInverse() * inputsTranspose) * matZBuffer;
+		
+		// TODO : Set return value
+		float* null = nullptr;
 
-		return 0.f;
+		return null;
 	}
 
 	float* LinearRegression(float* xCollection, float* yCollection, int dataSize)
