@@ -229,19 +229,20 @@ public class UseDll : MonoBehaviour
         else if (cubeRegressionPI.Length > 0)
         {
             // (float* inputs, float* zBuffer, const int nbParameter, const int nbSample)
-            float[] inputs = new float[cubeRegressionPI.Length * nbParameterRegressionPI];
+            float[] inputs = new float[cubeRegressionPI.Length * (nbParameterRegressionPI + 1)];
 
-            for (int i = 0, j = 0; i < cubeRegressionPI.Length; ++i, j += 2)
+            for (int i = 0, j = 0; i < cubeRegressionPI.Length; ++i, j += 3)
             {
-                inputs[j] = cubeRegressionPI[i].transform.position.x;
-                inputs[j + 1] = cubeRegressionPI[i].transform.position.y;
+                inputs[j] = 1;
+                inputs[j + 1] = cubeRegressionPI[i].transform.position.x;
+                inputs[j + 2] = cubeRegressionPI[i].transform.position.y;
             }
 
             float[] zBuffer = new float[cubeRegressionPI.Length];
 
             for (int i = 0; i < cubeRegressionPI.Length; ++i)
             {
-                zBuffer[i] = float.Parse(cubeRegressionPI[i].tag);
+                zBuffer[i] = cubeRegressionPI[i].transform.position.z;
             }
 
             //LinearRegressionWithEigen(float* inputs, float* zBuffer, const int nbParameter, const int nbSample);
@@ -251,18 +252,19 @@ public class UseDll : MonoBehaviour
             Marshal.Copy(inputs, 0, bufferInputs, inputs.Length);
             Marshal.Copy(zBuffer, 0, bufferZBuffer, zBuffer.Length);
 
-            IntPtr result = GetLinearRegressionWithEigen(bufferInputs, bufferZBuffer, this.nbParameterRegressionPI, this.cubeRegressionPI.Length);
-            float[] resultRegressionPI = new float[2];
-            Marshal.Copy(result, resultRegressionPI, 0, 2);
+            IntPtr result = GetLinearRegressionWithEigen(bufferInputs, bufferZBuffer, this.nbParameterRegressionPI + 1, this.cubeRegressionPI.Length);
+            float[] resultRegressionPI = new float[nbParameterRegressionPI+1];
+            Marshal.Copy(result, resultRegressionPI, 0, nbParameterRegressionPI+1);
 
-            /*for (int i = 0; i < cubeRegressionPI.Length; ++i)
+            float w0 = resultRegressionPI[0];
+            float w1 = resultRegressionPI[1];
+            float w2 = resultRegressionPI[2];
+
+            for(int i = 0; i < cubeRegressionPI.Length; ++i)
             {
-                this.cubeRegressionPI[i].transform.position = new Vector3(this.cubeRegressionPI[i].transform.position.x, this.cubeRegressionPI[i].transform.position.y, resultRegressionPI[i]);
-            }*/
-
-            this.slopeRegressionPI = resultRegressionPI[0];
-            this.y_interceptRegressionPI = resultRegressionPI[1];
-
+                float z = w0 * 1 + w1 * cubeRegressionPI[i].transform.position.x + w2 * cubeRegressionPI[i].transform.position.y;
+                cubeRegressionPI[i].transform.position = new Vector3(cubeRegressionPI[i].transform.position.x, cubeRegressionPI[i].transform.position.y, z);
+            }
         }
         // Init Classifier PLA
         else if(cubeClassifierPLA.Length > 0)
@@ -415,12 +417,6 @@ public class UseDll : MonoBehaviour
             Vector3 p2 = new Vector3(10, y2);
 
             Debug.DrawLine(p1, p2, Color.green);
-        }
-        else if (this.cubeRegressionPI.Length > 2)
-        {
-            float y1 = this.slopeRegressionPI * (-50) + y_interceptRegressionPI;
-            float y2 = this.slopeRegressionPI * 50 + y_interceptRegressionPI;
-            Debug.DrawLine(new Vector3(-50, y1, 0), new Vector3(50, y2, 0), Color.green);
         }
         else if (this.cubeClassifierPLA.Length > 2)
         {

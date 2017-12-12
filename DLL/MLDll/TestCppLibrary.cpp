@@ -34,21 +34,6 @@ extern "C" {
 		void setExpected(float expected) { this->expected = expected; }
 	};
 
-	float TestMultiply(float a, float b)
-	{
-		return a * b;
-	}
-
-	float TestDivide(float a, float b)
-	{
-		if (b == 0) 
-		{
-			return 0;
-		}
-
-		return a / b;
-	}
-
 	int makeRandomWeight(float* weights)
 	{
 		int i = 0;
@@ -87,7 +72,14 @@ extern "C" {
 
 		//logFile << "Result : " << std::endl << result << std::endl;
 		//logFile << "DATA : " << std::endl << result.data()[0] << std::endl << result.data()[1]<< std::endl;
-		return (float*)result.data();
+
+		float* res = new float[nbParameter];
+
+		res[0] = result.data()[0];
+		res[1] = result.data()[1];
+		res[2] = result.data()[2];
+
+		return res;
 	}
 
 	float* LinearRegression(float* xCollection, float* yCollection, int dataSize)
