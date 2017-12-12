@@ -6,6 +6,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <iostream>
+#include <map>
 #include <math.h>
 #include <fstream>
 
@@ -58,11 +59,19 @@ extern "C" {
 		return i;
 	}
 
-	float LinearRegressionWithEigen(float* xCollection, float* yCollection, int nbXCollection, int nbYCollection)
+	float* LinearRegressionWithEigen(float* inputs, float* zBuffer, const int nbParameter, const int nbSample)
 	{
-		//Eigen::Matrix2d mat(nbXCollection, 
+		Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> > matInputs(inputs, nbSample, nbParameter);
+		Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> > matZBuffer(zBuffer, nbSample, 1);
 
-		return 0.f;
+		// W = ((X^T X)^-1 X^T)Y
+		Eigen::Transpose<Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> > > inputsTranspose = matInputs.transpose();
+		auto result = ((inputsTranspose * matInputs).completeOrthogonalDecomposition().pseudoInverse() * inputsTranspose) * matZBuffer;
+		
+		// TODO : Set return value
+		float* null = nullptr;
+
+		return null;
 	}
 
 	float* LinearRegression(float* xCollection, float* yCollection, int dataSize)
@@ -164,8 +173,8 @@ extern "C" {
 
 			nativeInputs.push_back(sample);
 		}
-
-		logFile << "Initialize sample : DONE" << std::endl << std::endl;
+		
+		logFile << "Initialize sample : DONE - NbSample : " << nbSample <<  std::endl << std::endl;
 
 		// bias ? not sure
 		float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2));
@@ -174,8 +183,10 @@ extern "C" {
 		int iteration = 0;
 		std::vector<float> realResult;
 
+
 		while (iteration < nbIteration && different)
 		{
+			logFile << "Iteration " << iteration << " : " << std::endl << std::endl << std::endl;
 			// Here we'll update weights of parameters
 			// Loop sample
 			//std::vector<float> realResultTmp;
@@ -194,6 +205,8 @@ extern "C" {
 				}
 				result -= w0;
 
+				logFile << "Result for sample " << i << " : " << result << "  Expected : " << expected[i] << std::endl;
+				
 				if (std::abs(result - nativeInputs[i]->getExpected()) > tolerance)
 				{
 					needToContinue = true;
@@ -267,7 +280,7 @@ extern "C" {
 		}
 
 		resultWeight[nbParameters] = w0;
-
+		logFile.close();
 		return resultWeight;
 	}
 
