@@ -12,38 +12,142 @@ public class UseDll : MonoBehaviour
     public static extern IntPtr GetLinearRegressionFunction(IntPtr xCollection, IntPtr yCollection, int dataSize);
 
     [DllImport("MLDll", EntryPoint = "PerceptronRosenblatt")]
-    public static extern IntPtr GetLinearClassifierFunction(IntPtr inputs, IntPtr expected, IntPtr weights, int nbParameters, int nbSample, float stepLearning, int nbIteration, float tolerance);
+    public static extern IntPtr GetLinearClassifierRosenblatt(IntPtr inputs, IntPtr expected, IntPtr weights, int nbParameters, int nbSample, float stepLearning, int nbIteration, float tolerance);
 
-    [DllImport("MLDll", EntryPoint = "TestRefArrayOfInts")]
-    public static extern IntPtr GetTestRefArrayOfInts(ref IntPtr array, ref int size);
+    [DllImport("MLDll", EntryPoint = "PLA")]
+    public static extern IntPtr GetLinearClassifierPLA(IntPtr inputs, IntPtr expected, IntPtr weights, int nbParameters, int nbSample, float stepLearning, int nbIteration, float tolerance);
+
+    [DllImport("MLDll", EntryPoint = "LinearRegressionWithEigen")]
+    public static extern IntPtr GetLinearRegressionWithEigen(IntPtr inputs, IntPtr zBuffer, int nbParameter, int nbSample);
+
+    [DllImport("MLDll", EntryPoint = "RBFNaiveTraining")]
+    public static extern IntPtr RunRBFNaiveTraining(float gamma, IntPtr inputs, IntPtr expected, int nbParameters, int nbSamples, int nbOutputs);
+
+    [DllImport("MLDll", EntryPoint = "RBFRegression")]
+    public static extern IntPtr RunRBFRegression(float gamma, IntPtr inputs, IntPtr data, IntPtr weights, int nbParameters, int nbSamples, int nbOutputs);
+
+    [DllImport("MLDll", EntryPoint = "RBFClassification")]
+    public static extern IntPtr RunRBFClassification(float gamma, IntPtr inputs, IntPtr data, IntPtr weights, int nbParameters, int nbSamples, int nbOutputs);
+
+    [DllImport("MLDll", EntryPoint = "RBFkMeansTraining")]
+    public static extern IntPtr RunRBFkMeansTraining(float epsilon, int cluster, float gamma, IntPtr inputs, IntPtr expected, int nbParameters, int nbSamples, int nbOutputs);
     #endregion
 
 
     #region Data
     [SerializeField]
+    bool verboseMode = false;
+
+    // Regression
+    [SerializeField]
     private Transform[] cubeRegression;
 
+
+    // Regression Pseudo Inverse
     [SerializeField]
-    private GameObject[] cubeClassifier;
+    private GameObject[] cubeRegressionPI;
 
     [SerializeField]
-    int nbParameterClassifier = 2;
+    private int nbParameterRegressionPI = 2;
+
+    // Rosenblat
+    [SerializeField]
+    private GameObject[] cubeClassifierRosenblatt;
 
     [SerializeField]
-    float stepLearningClassifier = 0.001f;
+    private int nbParameterClassifierRosenblatt = 2;
 
     [SerializeField]
-    int nbIterationClassifier = 1000;
+    private float stepLearningClassifierRosenblatt = 0.001f;
 
     [SerializeField]
-    float toleranceClassifier = 0.001f;
+    private int nbIterationClassifierRosenblatt = 1000;
+
+    [SerializeField]
+    private float toleranceClassifierRosenblatt = 0.001f;
+
+
+    // Training RBF
+    [SerializeField]
+    int nbCluster = 2;
+
+    [SerializeField]
+    float epsilon = 0.0f;
+
+
+    // RBF Classifier
+    [SerializeField]
+    private GameObject[] cubeClassifierRBF;
+
+    [SerializeField]
+    bool TrainRBFClassifer = true;
+
+    [SerializeField]
+    private GameObject newPointRBFClassification;
+
+    [SerializeField]
+    private int nbParameterClassifierRBF = 2;
+
+    [SerializeField]
+    private float gammaClassifierRBF = 0.0f;
+
+    [SerializeField]
+    private int nbOutputClassificationRBF = 0;
+
+
+    // RBF Regression
+    [SerializeField]
+    private GameObject[] cubeRegressionRBF;
+
+    [SerializeField]
+    bool TrainRBFRegression = true;
+
+    [SerializeField]
+    private GameObject newPointRBFRegression;
+
+    [SerializeField]
+    private int nbParameterRegressionRBF = 2;
+
+    [SerializeField]
+    private float gammaRegressionRBF = 0.0f;
+
+    [SerializeField]
+    private int nbOutputRegressionRBF = 0;
+
+
+    // PLA
+    [SerializeField]
+    private GameObject[] cubeClassifierPLA;
+
+    [SerializeField]
+    private int nbParameterClassifierPLA = 2;
+
+    [SerializeField]
+    private float stepLearningClassifierPLA = 0.001f;
+
+    [SerializeField]
+    private int nbIterationClassifierPLA = 1000;
+
+    [SerializeField]
+    private float toleranceClassifierPLA = 0.001f;
+
 
     private float slopeRegression = 0.0f;
     private float y_interceptRegression = 0.0f;
 
-    private float weightX = 0.0f;
-    private float weightY = 0.0f;
-    private float weightBias = 0.0f;
+    private float slopeRegressionPI = 0.0f;
+    private float y_interceptRegressionPI = 0.0f;
+
+    private float weightXRosenblatt = 0.0f;
+    private float weightYRosenblatt = 0.0f;
+    private float weightBiasRosenblatt = 0.0f;
+
+    private float weightXPLA = 0.0f;
+    private float weightYPLA = 0.0f;
+    private float weightBiasPLA = 0.0f;
+
+    private IntPtr bufferWeightRBFClass;
+    private IntPtr bufferWeightRBFRegr;
     #endregion
 
 
@@ -79,28 +183,28 @@ public class UseDll : MonoBehaviour
             // Print it out to the console
             Debug.Log("Function found after Linear Regression : " + resultLinearRegression[0] + "x + " + resultLinearRegression[1]);
         }
-        // Init Classifier
-        else if (cubeClassifier.Length > 2)
+        // Init Classifier Rosenblatt
+        else if (cubeClassifierRosenblatt.Length > 2)
         {
-            int nbSample = cubeClassifier.Length; // count sample
+            int nbSample = cubeClassifierRosenblatt.Length; // count sample
             /*
             if (stepLearningClassifier == null || nbIterationClassifier == null || toleranceClassifier == null)
                 Debug.Log("Need some parameters in the classifier algorithm.");
                 return;
             */
-            float[] inputs = new float[nbSample * nbParameterClassifier];
+            float[] inputs = new float[nbSample * nbParameterClassifierRosenblatt];
             float[] expected = new float[nbSample];
             float[] weights = new float[nbSample]; // Will be erased, cause initialized in DLL
 
-            for (int i = 0, j = 0; i < cubeClassifier.Length; ++i, j+=2)
+            for (int i = 0, j = 0; i < cubeClassifierRosenblatt.Length; ++i, j += 2)
             {
-                inputs[j] = cubeClassifier[i].transform.position.x;
-                inputs[j + 1] = cubeClassifier[i].transform.position.y;
+                inputs[j] = cubeClassifierRosenblatt[i].transform.position.x;
+                inputs[j + 1] = cubeClassifierRosenblatt[i].transform.position.y;
 
-                expected[i] = Convert.ToInt32(cubeClassifier[i].tag);
+                expected[i] = Convert.ToInt32(cubeClassifierRosenblatt[i].tag);
             }
 
-            for (int i = 0; i < this.nbParameterClassifier; ++i)
+            for (int i = 0; i < this.nbParameterClassifierRosenblatt; ++i)
             {
                 weights[i] = 1.0f;
             }
@@ -113,15 +217,178 @@ public class UseDll : MonoBehaviour
             Marshal.Copy(expected, 0, bufferExpected, expected.Length);
             Marshal.Copy(weights, 0, bufferWeights, weights.Length);
 
-            IntPtr result = GetLinearClassifierFunction(bufferInputs, bufferExpected, bufferWeights, this.nbParameterClassifier, this.cubeClassifier.Length, this.stepLearningClassifier, this.nbIterationClassifier, this.toleranceClassifier);
-            float[] resultLinearClassifier = new float[this.nbParameterClassifier + 1]; // +1 for bias
-            Marshal.Copy(result, resultLinearClassifier, 0, this.nbParameterClassifier + 1); 
+            IntPtr result = GetLinearClassifierRosenblatt(bufferInputs, bufferExpected, bufferWeights, this.nbParameterClassifierRosenblatt, this.cubeClassifierRosenblatt.Length, this.stepLearningClassifierRosenblatt, this.nbIterationClassifierRosenblatt, this.toleranceClassifierRosenblatt);
+            float[] resultLinearClassifier = new float[this.nbParameterClassifierRosenblatt + 1]; // +1 for bias
+            Marshal.Copy(result, resultLinearClassifier, 0, this.nbParameterClassifierRosenblatt + 1);
 
-            this.weightX = resultLinearClassifier[0];
-            this.weightY = resultLinearClassifier[1];
-            this.weightBias = resultLinearClassifier[2];
+            this.weightXRosenblatt = resultLinearClassifier[0];
+            this.weightYRosenblatt = resultLinearClassifier[1];
+            this.weightBiasRosenblatt = resultLinearClassifier[2];
+        }
+        // Init LinearRegression Eigen
+        else if (cubeRegressionPI.Length > 0)
+        {
+            // (float* inputs, float* zBuffer, const int nbParameter, const int nbSample)
+            float[] inputs = new float[cubeRegressionPI.Length * nbParameterRegressionPI];
 
-            //Debug.Log("Formula : " + resultLinearClassifier[0] + "x + " + resultLinearClassifier[1] + "y  ????");
+            for (int i = 0, j = 0; i < cubeRegressionPI.Length; ++i, j += 2)
+            {
+                inputs[j] = cubeRegressionPI[i].transform.position.x;
+                inputs[j + 1] = cubeRegressionPI[i].transform.position.y;
+            }
+
+            float[] zBuffer = new float[cubeRegressionPI.Length];
+
+            for (int i = 0; i < cubeRegressionPI.Length; ++i)
+            {
+                zBuffer[i] = float.Parse(cubeRegressionPI[i].tag);
+            }
+
+            //LinearRegressionWithEigen(float* inputs, float* zBuffer, const int nbParameter, const int nbSample);
+            IntPtr bufferInputs = Marshal.AllocCoTaskMem(Marshal.SizeOf(inputs.Length) * inputs.Length);
+            IntPtr bufferZBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(zBuffer.Length) * zBuffer.Length);
+
+            Marshal.Copy(inputs, 0, bufferInputs, inputs.Length);
+            Marshal.Copy(zBuffer, 0, bufferZBuffer, zBuffer.Length);
+
+            IntPtr result = GetLinearRegressionWithEigen(bufferInputs, bufferZBuffer, this.nbParameterRegressionPI, this.cubeRegressionPI.Length);
+            float[] resultRegressionPI = new float[2];
+            Marshal.Copy(result, resultRegressionPI, 0, 2);
+
+            /*for (int i = 0; i < cubeRegressionPI.Length; ++i)
+            {
+                this.cubeRegressionPI[i].transform.position = new Vector3(this.cubeRegressionPI[i].transform.position.x, this.cubeRegressionPI[i].transform.position.y, resultRegressionPI[i]);
+            }*/
+
+            this.slopeRegressionPI = resultRegressionPI[0];
+            this.y_interceptRegressionPI = resultRegressionPI[1];
+
+        }
+        // Init Classifier PLA
+        else if(cubeClassifierPLA.Length > 0)
+        {
+            int nbSample = cubeClassifierPLA.Length; // count sample
+            /*
+            if (stepLearningClassifier == null || nbIterationClassifier == null || toleranceClassifier == null)
+                Debug.Log("Need some parameters in the classifier algorithm.");
+                return;
+            */
+            float[] inputs = new float[nbSample * nbParameterClassifierPLA];
+            float[] expected = new float[nbSample];
+            float[] weights = new float[nbSample]; // Will be erased, cause initialized in DLL
+
+            for (int i = 0, j = 0; i < cubeClassifierPLA.Length; ++i, j += 2)
+            {
+                inputs[j] = cubeClassifierPLA[i].transform.position.x;
+                inputs[j + 1] = cubeClassifierPLA[i].transform.position.y;
+
+                expected[i] = Convert.ToInt32(cubeClassifierPLA[i].tag);
+            }
+
+            for (int i = 0; i < this.nbParameterClassifierPLA; ++i)
+            {
+                weights[i] = 1.0f;
+            }
+
+            IntPtr bufferInputs = Marshal.AllocCoTaskMem(Marshal.SizeOf(inputs.Length) * inputs.Length);
+            IntPtr bufferExpected = Marshal.AllocCoTaskMem(Marshal.SizeOf(expected.Length) * expected.Length);
+            IntPtr bufferWeights = Marshal.AllocCoTaskMem(Marshal.SizeOf(weights.Length) * weights.Length);
+
+            Marshal.Copy(inputs, 0, bufferInputs, inputs.Length);
+            Marshal.Copy(expected, 0, bufferExpected, expected.Length);
+            Marshal.Copy(weights, 0, bufferWeights, weights.Length);
+
+            IntPtr result = GetLinearClassifierPLA(bufferInputs, bufferExpected, bufferWeights, this.nbParameterClassifierPLA, this.cubeClassifierPLA.Length, this.stepLearningClassifierPLA, this.nbIterationClassifierPLA, this.toleranceClassifierPLA);
+            float[] resultLinearClassifier = new float[this.nbParameterClassifierPLA + 1]; // +1 for bias
+            Marshal.Copy(result, resultLinearClassifier, 0, this.nbParameterClassifierPLA + 1);
+
+            this.weightXPLA = resultLinearClassifier[0];
+            this.weightYPLA = resultLinearClassifier[1];
+            this.weightBiasPLA = resultLinearClassifier[2];
+        }
+        // Init Classifier RBF
+        else if(this.cubeClassifierRBF.Length > 0)
+        {
+            int nbSample = cubeClassifierRBF.Length;
+            float[] inputs = new float[nbSample * nbParameterClassifierRBF];
+            float[] expected = new float[nbSample];
+
+            for (int i = 0, j = 0; i < nbSample; ++i, j += 2)
+            {
+                inputs[j] = cubeClassifierRBF[i].transform.position.x;
+                inputs[j + 1] = cubeClassifierRBF[i].transform.position.y;
+
+                expected[i] = Convert.ToInt32(cubeClassifierRBF[i].tag);
+            }
+
+            IntPtr bufferInputs = Marshal.AllocCoTaskMem(Marshal.SizeOf(inputs.Length) * inputs.Length);
+            IntPtr bufferExpected = Marshal.AllocCoTaskMem(Marshal.SizeOf(expected.Length) * expected.Length);
+
+            Marshal.Copy(inputs, 0, bufferInputs, inputs.Length);
+            Marshal.Copy(expected, 0, bufferExpected, expected.Length);
+
+            if(this.TrainRBFClassifer || this.bufferWeightRBFClass == null)
+            {
+                IntPtr result = RunRBFNaiveTraining(gammaClassifierRBF, bufferInputs, bufferExpected, this.nbParameterClassifierRBF, nbSample, this.nbOutputClassificationRBF);
+                float[] resultLinearClassifierTraining = new float[this.nbParameterClassifierRBF];
+                Marshal.Copy(result, resultLinearClassifierTraining, 0, this.nbParameterClassifierRBF * nbOutputClassificationRBF);
+                bufferWeightRBFClass = Marshal.AllocCoTaskMem(Marshal.SizeOf(resultLinearClassifierTraining.Length) * resultLinearClassifierTraining.Length);
+                float[] weights = new float[nbParameterClassifierRBF];
+                Marshal.Copy(weights, 0, bufferWeightRBFClass, weights.Length);
+            }
+            
+            float[] newPoint = new float[2];
+            newPoint[0] = this.newPointRBFClassification.transform.position.x;
+            newPoint[1] = this.newPointRBFClassification.transform.position.y;
+
+            IntPtr bufferNewPoint = Marshal.AllocCoTaskMem(Marshal.SizeOf(newPoint.Length) * newPoint.Length);
+            Marshal.Copy(newPoint, 0, bufferNewPoint, newPoint.Length);
+
+            IntPtr resultClass = RunRBFClassification(gammaClassifierRBF, bufferInputs,bufferNewPoint, bufferWeightRBFClass, nbParameterClassifierRBF, nbSample, nbOutputClassificationRBF);
+            float[] resultClassif = new float[nbOutputClassificationRBF];
+            Marshal.Copy(resultClass, resultClassif, 0, nbOutputClassificationRBF);
+        }
+        // Init Regression RBF
+        else if(this.cubeRegressionRBF.Length > 0)
+        {
+            int nbSample = cubeRegressionRBF.Length;
+            float[] inputs = new float[nbSample * nbParameterRegressionRBF];
+            float[] expected = new float[nbSample];
+
+            for (int i = 0, j = 0; i < nbSample; ++i, j += 2)
+            {
+                inputs[j] = cubeRegressionRBF[i].transform.position.x;
+                inputs[j + 1] = cubeRegressionRBF[i].transform.position.y;
+
+                expected[i] = Convert.ToInt32(cubeRegressionRBF[i].tag);
+            }
+
+            IntPtr bufferInputs = Marshal.AllocCoTaskMem(Marshal.SizeOf(inputs.Length) * inputs.Length);
+            IntPtr bufferExpected = Marshal.AllocCoTaskMem(Marshal.SizeOf(expected.Length) * expected.Length);
+
+            Marshal.Copy(inputs, 0, bufferInputs, inputs.Length);
+            Marshal.Copy(expected, 0, bufferExpected, expected.Length);
+
+            if (this.TrainRBFRegression || this.bufferWeightRBFRegr == null)
+            {
+                IntPtr result = RunRBFNaiveTraining(gammaRegressionRBF, bufferInputs, bufferExpected, this.nbParameterRegressionRBF, nbSample, this.nbOutputRegressionRBF);
+                float[] resultLinearRegressionTraining = new float[this.nbParameterRegressionRBF];
+                Marshal.Copy(result, resultLinearRegressionTraining, 0, this.nbParameterRegressionRBF * nbOutputRegressionRBF);
+                bufferWeightRBFRegr = Marshal.AllocCoTaskMem(Marshal.SizeOf(resultLinearRegressionTraining.Length) * resultLinearRegressionTraining.Length);
+                float[] weights = new float[nbParameterRegressionRBF];
+                Marshal.Copy(weights, 0, bufferWeightRBFRegr, weights.Length);
+            }
+
+            float[] newPoint = new float[2];
+            newPoint[0] = this.newPointRBFRegression.transform.position.x;
+            newPoint[1] = this.newPointRBFRegression.transform.position.y;
+
+            IntPtr bufferNewPoint = Marshal.AllocCoTaskMem(Marshal.SizeOf(newPoint.Length) * newPoint.Length);
+            Marshal.Copy(newPoint, 0, bufferNewPoint, newPoint.Length);
+
+            IntPtr resultRegr = RunRBFRegression(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFClass, nbParameterClassifierRBF, nbSample, nbOutputClassificationRBF);
+            float[] resultRegress = new float[nbOutputRegressionRBF];
+            Marshal.Copy(resultRegr, resultRegress, 0, nbOutputRegressionRBF);
         }
     }
 
@@ -135,15 +402,34 @@ public class UseDll : MonoBehaviour
             float y2 = this.slopeRegression * 50 + y_interceptRegression;
             Debug.DrawLine(new Vector3(-50, y1, 0), new Vector3(50, y2, 0), Color.green);
         }
-        else if (this.cubeClassifier.Length > 2)
+        else if (this.cubeClassifierRosenblatt.Length > 2)
         {
             // for x = -10 and x = -10 
-
             float x1 = -10;
-            float y1 = -(x1 * this.weightX / this.weightY) - ((-1 * this.weightBias) / this.weightY);
+            float y1 = -(x1 * this.weightXRosenblatt / this.weightYRosenblatt) - ((-1 * this.weightBiasRosenblatt) / this.weightYRosenblatt);
 
             float x2 = 10;
-            float y2 = -(x2 * this.weightX / this.weightY) + (this.weightBias / this.weightY);
+            float y2 = -(x2 * this.weightXRosenblatt / this.weightYRosenblatt) + (this.weightBiasRosenblatt / this.weightYRosenblatt);
+
+            Vector3 p1 = new Vector3(-10, y1);
+            Vector3 p2 = new Vector3(10, y2);
+
+            Debug.DrawLine(p1, p2, Color.green);
+        }
+        else if (this.cubeRegressionPI.Length > 2)
+        {
+            float y1 = this.slopeRegressionPI * (-50) + y_interceptRegressionPI;
+            float y2 = this.slopeRegressionPI * 50 + y_interceptRegressionPI;
+            Debug.DrawLine(new Vector3(-50, y1, 0), new Vector3(50, y2, 0), Color.green);
+        }
+        else if (this.cubeClassifierPLA.Length > 2)
+        {
+            // for x = -10 and x = -10 
+            float x1 = -10;
+            float y1 = -(x1 * this.weightXPLA / this.weightYPLA) - ((-1 * this.weightBiasPLA) / this.weightYPLA);
+
+            float x2 = 10;
+            float y2 = -(x2 * this.weightXPLA / this.weightYPLA) + (this.weightBiasPLA / this.weightYPLA);
 
             Vector3 p1 = new Vector3(-10, y1);
             Vector3 p2 = new Vector3(10, y2);

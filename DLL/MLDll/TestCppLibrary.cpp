@@ -6,6 +6,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <iostream>
+#include <ctime>
 #include <map>
 #include <math.h>
 #include <fstream>
@@ -40,7 +41,8 @@ extern "C" {
 
 	float TestDivide(float a, float b)
 	{
-		if (b == 0) {
+		if (b == 0) 
+		{
 			return 0;
 		}
 
@@ -59,19 +61,33 @@ extern "C" {
 		return i;
 	}
 
-	float* LinearRegressionWithEigen(float* inputs, float* zBuffer, const int nbParameter, const int nbSample)
+	float* LinearRegressionWithEigen(float* inputs, float* zBuffer, int nbParameter, int nbSample)
 	{
+		//std::ofstream logFile;
+		//logFile.open("logFileDll.log");
+
+		//for(int i = 0; i < nbSample; i+=2)
+		//{
+		//	logFile << "Sample " << i << " : x =" << inputs[i] << " y =" << inputs[i+1] << std::endl;
+		//}
+
 		Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> > matInputs(inputs, nbSample, nbParameter);
 		Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> > matZBuffer(zBuffer, nbSample, 1);
 
 		// W = ((X^T X)^-1 X^T)Y
-		Eigen::Transpose<Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> > > inputsTranspose = matInputs.transpose();
-		auto result = ((inputsTranspose * matInputs).completeOrthogonalDecomposition().pseudoInverse() * inputsTranspose) * matZBuffer;
-		
-		// TODO : Set return value
-		float* null = nullptr;
 
-		return null;
+		//logFile << "Matrix inputs : " << std::endl << matInputs << std::endl << std::endl;
+		//logFile << "Matrix inputs transpose: " << std::endl << matInputs.transpose() << std::endl << std::endl;
+		//logFile << "Product Matrix inputs transpose and matInputs: " << std::endl << (matInputs.transpose() * matInputs) << std::endl << std::endl;
+		//logFile << "Pseudo Inverse product Matrix inputs transpose and matInputs: " << std::endl << ((matInputs.transpose() * matInputs).completeOrthogonalDecomposition().pseudoInverse()) << std::endl << std::endl;
+		//logFile << "Transpose product Matrix inputs transpose and matInputs: " << std::endl << ((matInputs.transpose() * matInputs).completeOrthogonalDecomposition().pseudoInverse() * matInputs.transpose()) << std::endl << std::endl;
+		//logFile << "ZBuffer : " << std::endl << matZBuffer << std::endl << std::endl;
+
+		Eigen::MatrixXf result = ((matInputs.transpose() * matInputs).completeOrthogonalDecomposition().pseudoInverse() * matInputs.transpose()) * matZBuffer;
+
+		//logFile << "Result : " << std::endl << result << std::endl;
+		//logFile << "DATA : " << std::endl << result.data()[0] << std::endl << result.data()[1]<< std::endl;
+		return (float*)result.data();
 	}
 
 	float* LinearRegression(float* xCollection, float* yCollection, int dataSize)
@@ -114,10 +130,10 @@ extern "C" {
 		//y itercept
 		y_intercept = AVGy - slope * AVGx;
 
-		std::ofstream logFile;
-		logFile.open("logFileDll.log");
-		logFile << "In DLL : " << std::endl << std::endl << "DataSize in DLL : " << dataSize << std::endl <<"AVGy : " << AVGy << std::endl << "AVGx : " << AVGx << std::endl<< std::endl << "y_intercept : " << y_intercept << std::endl << "Slope : " << slope << std::endl;
-		logFile.close();
+		//std::ofstream logFile;
+		//logFile.open("logFileDll.log");
+		//logFile << "In DLL : " << std::endl << std::endl << "DataSize in DLL : " << dataSize << std::endl <<"AVGy : " << AVGy << std::endl << "AVGx : " << AVGx << std::endl<< std::endl << "y_intercept : " << y_intercept << std::endl << "Slope : " << slope << std::endl;
+		//logFile.close();
 
 		// slope * x + y_intercept = y
 
@@ -127,13 +143,6 @@ extern "C" {
 
 		return result;
 	}
-
-	// Initialiser chaque poids pour chaque valeur
-	// Passer la matrice Entree / matrice Resultat / Le pas pour maj du poids
-	// Transformer les matrices en matrice pseudo inverse avec la lib Eigen
-	// Algo Rosenblatt (On compare à chaque iteration la matrice resultat attendue et la matrice entrée modifiée, 
-	// si les deux matrices sont différentes, on mets à jour les poids)
-
 
 	/// Parameters : 
 	// inputs : corresponding to input parameters 
@@ -150,9 +159,9 @@ extern "C" {
 	float* PerceptronRosenblatt(float* inputs, float* expected, float* weights, int nbParameters, int nbSample, float stepLearning, int nbIteration, float tolerance)
 	{
 
-		std::ofstream logFile;
-		logFile.open("logFileDll.log");
-		logFile << "Start RosenBlatt Perceptron : " << std::endl << std::endl << std::endl;
+		//std::ofstream logFile;
+		//logFile.open("logFileDll.log");
+		//logFile << "Start RosenBlatt Perceptron : " << std::endl << std::endl << std::endl;
 		// Initialize weight with random between -1 and 1, or just initialize 0 maybe ?
 		int countWeight = makeRandomWeight(weights);
 
@@ -174,9 +183,8 @@ extern "C" {
 			nativeInputs.push_back(sample);
 		}
 		
-		logFile << "Initialize sample : DONE - NbSample : " << nbSample <<  std::endl << std::endl;
+		//logFile << "Initialize sample : DONE - NbSample : " << nbSample <<  std::endl << std::endl;
 
-		// bias ? not sure
 		float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2));
 
 		bool different = true;
@@ -186,10 +194,9 @@ extern "C" {
 
 		while (iteration < nbIteration && different)
 		{
-			logFile << "Iteration " << iteration << " : " << std::endl << std::endl << std::endl;
+			//logFile << "Iteration " << iteration << " : " << std::endl << std::endl << std::endl;
 			// Here we'll update weights of parameters
 			// Loop sample
-			//std::vector<float> realResultTmp;
 
 			bool needToContinue = false;
 
@@ -198,6 +205,7 @@ extern "C" {
 				// Logicaly the number of weight correspond to the number of parameter in a sample so we stop the loop when we are out of the number of weight
 				// formula: (w1 * x1) + (w2 * x2) - w0 (-w0 because we chose x0 = - 1) when the two vector are different
 				float result = 0.f;
+				float y;
 
 				for (int j = 0; j < countWeight; ++j)
 				{
@@ -205,25 +213,33 @@ extern "C" {
 				}
 				result -= w0;
 
-				logFile << "Result for sample " << i << " : " << result << "  Expected : " << expected[i] << std::endl;
+				if(result < 0)
+				{
+					y = -1.f;
+				}
+				else
+				{
+					y = 1.f;
+				}
+
+				//logFile << "Result for sample " << i << " : " << y << "  Expected : " << expected[i] << std::endl;
 				
-				if (std::abs(result - nativeInputs[i]->getExpected()) > tolerance)
+				if (std::abs(y - nativeInputs[i]->getExpected()) > tolerance)
 				{
 					needToContinue = true;
 					for (int j = 0; j < countWeight; ++j)
 					{
-						weights[j] = weights[j] + stepLearning * (expected[i] - result) * inputs[j + i * nbParameters];
+						weights[j] = weights[j] + stepLearning * (expected[i] - y) * inputs[j + i * nbParameters];
 					}
 
-					// We forgot to update bias weight before
-					w0 = w0 + stepLearning * (expected[i] - result) * x0;
+					w0 = w0 + stepLearning * (expected[i] - y) * x0;
 
-					for(int i = 0; i < nbParameters; ++i)
-					{
-						logFile << "Weight " << i << " : " << weights[i] << std::endl;
-					}
+					//for(int i = 0; i < nbParameters; ++i)
+					//{
+					//	logFile << "Weight " << i << " : " << weights[i] << std::endl;
+					//}
 
-					logFile << std::endl;
+					//logFile << std::endl;
 				}
 			}
 
@@ -233,44 +249,14 @@ extern "C" {
 			}
 
 			++iteration;
-
-
-			/*
-			// Push float* in a vector to make the comparison between real result and expecte result easier
-			std::vector<float> expectedResult;
-			for(int i = 0; i < nativeInputs.size(); ++i)
-			{
-			expectedResult.push_back(expected[i]);
-			}
-
-			// Comparision between two vector we'll first, check the size of the two vector, and if they have the same size, compare value by value
-			if(expectedResult == realResultTmp)
-			{
-			different = false;
-			realResult = realResultTmp;
-			}
-			else
-			{
-			for(int indexSample = 0; indexSample < nativeInputs.size(); ++indexSample)
-			{
-			for (int i = 0; i < countWeight; ++i)
-			{
-			weights[i] = weights[i] + stepLearning * (expected[nbSample] - realResultTmp[nbSample]) * inputs[i + indexSample * nbParameters];
-			}
-			}
-			}
-			++iteration;*/
 		}
 
-		logFile << "Whole necessary iteration (" << iteration <<") : DONE" << std::endl;
+		//logFile << "Whole necessary iteration (" << iteration <<") : DONE" << std::endl;
 
-		for(int i = 0; i < nbParameters; ++i)
-		{
-			logFile << "Weight " << i << " : " << weights[i] << std::endl;
-		}
-
-		//weights
-		//float* result = &(realResult[0]);
+		//for(int i = 0; i < nbParameters; ++i)
+		//{
+		//	logFile << "Weight " << i << " : " << weights[i] << std::endl;
+		//}
 
 		float* resultWeight = new float[nbParameters + 1];
 		
@@ -279,208 +265,104 @@ extern "C" {
 			resultWeight[i] = weights[i];
 		}
 
+		// Release memory
+		for(int i = 0; i < nativeInputs.size(); ++i)
+		{
+			Sample* s = nativeInputs[i];
+			nativeInputs.erase(nativeInputs.begin() + i);
+			delete s;
+		}
+
 		resultWeight[nbParameters] = w0;
-		logFile.close();
+		//logFile.close();
 		return resultWeight;
 	}
 
-
-	float* MLPerceptronClassification(float* inputs, float* expected, float* weights, int* layersNeurones, int nbParameters, int nbSample, int nbLayers, float stepLearning, int nbIteration, float tolerance)
+	float* PLA(float* inputs, float* expected, float* weights, int nbParameters, int nbSample, float stepLearning, int nbIteration, float tolerance)
 	{
-		//weights should contain even the weights for the bias neurone in the first layer
 
-		// Initialize weight with random between -1 and 1
+		//std::ofstream logFile;
+		//logFile.open("logFileDll.log");
+		//logFile << "Start PLA Perceptron : " << std::endl << std::endl << std::endl;
+		// Initialize weight with random between -1 and 1, or just initialize 0 maybe ?
 		int countWeight = makeRandomWeight(weights);
 
-		int countNeurones = nbParameters + 1;
-		for (int i = 0; i < nbLayers; ++i)
-		{
-			countNeurones += layersNeurones[i];
-		}
-
-		std::vector<float> x_li;
-		x_li.reserve(countNeurones + 1);			//"+1" pour le dernier neurone résultat
-
-		std::vector<float> d_li;
-		d_li.reserve(countNeurones + 1);
-
-		float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1 - (-1))));
+		// bias
+		float x0 = -1;
 
 		// Initialize array of sample given in input with the expected value in output for each sample in third parameter of sample's constructor
 		std::vector<Sample*> nativeInputs;
 		for (int i = 0; i < nbSample; ++i)
 		{
 			std::vector<float> parameters;
-			std::vector<float> exp;
 			for (int j = 0; j < nbParameters; ++j)
 			{
-				parameters.push_back(inputs[j + i * nbParameters]);
+				parameters.push_back(inputs[j + i]);
 			}
 
 			Sample* sample = new Sample(parameters, expected[i]);
+
 			nativeInputs.push_back(sample);
 		}
+		
+		//logFile << "Initialize sample : DONE - NbSample : " << nbSample <<  std::endl << std::endl;
 
-		// Initializing final bias (the one not going through layers)
-		//float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2));
+		float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2));
 
 		bool different = true;
 		int iteration = 0;
 		std::vector<float> realResult;
-		bool needToContinue;
-		int counter, nbx, nox, nbd;
-		float result;
-		int lastLayerNb;
+
 
 		while (iteration < nbIteration && different)
 		{
+			//logFile << "Iteration " << iteration << " : " << std::endl << std::endl << std::endl;
 			// Here we'll update weights of parameters
 			// Loop sample
-			//std::vector<float> realResultTmp;
-			needToContinue = false;
 
-			//pour chaque sample d'entraînement
+			bool needToContinue = false;
+
 			for (int i = 0; i < nbSample; ++i)
 			{
-				//on reset tout
-				nbx = 0;
-				counter = 0;
-				x_li.clear();
+				// Logicaly the number of weight correspond to the number of parameter in a sample so we stop the loop when we are out of the number of weight
+				// formula: (w1 * x1) + (w2 * x2) - w0 (-w0 because we chose x0 = - 1) when the two vector are different
+				float result = 0.f;
+				float y;
 
-				//pour chaque paramètre (plus neurone de biais) on ajoute les entrées dans le vecteur des x_li
-				for (int j = 0; j < nbParameters + 1; ++j)
+				for (int j = 0; j < countWeight; ++j)
 				{
-					x_li.push_back(nativeInputs[i]->getParameters()[j]);		//chaque entrée
+					result += nativeInputs[i]->getParameters()[j] * weights[j];
 				}
-				x_li.push_back(-1);										//neurone de biais
-
-				//pour chaque couche de notre perceptron
-				for (int j = 0; j < nbLayers; ++j)
-				{
-					//pour chaque neurone de la couche en cours
-					for (int k = 0; k < layersNeurones[j]; ++k)
-					{
-						result = 0.f;										//reset du résultat
-
-						//pour chaque x de la couche d'avant, on ajoute le x * w
-						for (int l = nbx; l < x_li.size(); ++l)
-						{
-							result += x_li[l] * weights[counter++];		//on incrémente counter pour chercher le bon poids facilement
-						}
-						result = tanh(result);								//sigmoïde de la somme pondérée
-						x_li.push_back(result);							//on ajoute le x au vecteur des x_li
-					}
-
-					//on incrémente nbx pour savoir à quels x commencer pour la boucle du dessus
-					if (j == 0)
-					{
-						//si première couche, on incrémente du nombre de paramètres + 1 (neurone de biais)
-						nbx += nbParameters + 1;							
-					}
-					else
-					{
-						//sinon on incrémente du nombre de neurones dans la couche en cours
-						nbx += layersNeurones[j - 1];
-					}
-				}
-
-				//calcule final à partir des x de la dernière couche
-				result = 0.f;
-				for (int l = nbx; l = x_li.size(); ++l)
-				{
-					result += x_li[l] * weights[counter++];
-				}
-
-				//pour classification, on applique la sigmoïde à la sortie, pas pour la régression
 				result -= w0;
-				result = tanh(result);
-				x_li.push_back(result);
-				nox = x_li.size() - 1;
 
-				//si pas satisfait du résultat, rétropropagation du gradient
-				if (std::abs(result - nativeInputs[i]->getExpected()) > tolerance)
+				if(result < 0)
 				{
-					needToContinue = true;									//on doit continuer l'apprentissage
+					y = -1.f;
+				}
+				else
+				{
+					y = 1.f;
+				}
 
-					//calcul du delta de la dernière couche (calcul différent pour la régression)
-					float delta = (1 - pow(x_li[nox], 2)) * (x_li[nox] - nativeInputs[i]->getExpected());
-					d_li.push_back(delta);
-
-					--nox;
-					nbd = 0;
-
-					//pour chaque couche en partant de la dernière
-					for (int j = nbLayers - 1; j >= 0; --j)
+				//logFile << "Result for sample " << i << " : " << y << "  Expected : " << expected[i] << std::endl;
+				
+				if (std::abs(y - nativeInputs[i]->getExpected()) > tolerance)
+				{
+					needToContinue = true;
+					for (int j = 0; j < countWeight; ++j)
 					{
-						//pour chaque neurone de la couche en partant du dernier
-						for (int k = layersNeurones[j] - 1; k >= 0; --k)
-						{
-							delta = 0;
-							//pour chaque neurone vers lequel pointe de neurone en cours
-							for (int l = d_li.size() - 1; l >= nbd; --l)
-							{
-								delta += weights[--counter] * d_li[l];			//on décrémente counter pour être au bon poids
-							}
-							delta *= (1 - pow(x_li[nox--], 2));
-
-							d_li.push_back(delta);
-						}
-
-						//on incrémente nbd pour parcourir dans la boucle du neurone uniquement les d_li de la couche d'après
-						if (j == nbLayers - 1)
-						{
-							//si c'est la première itération, il n'y a qu'un seul neurone, celui de sortie
-							++nbd;
-						}
-						else
-						{
-							//sinon on décale du nombre de neurones de la couche parcourue
-							nbd += layersNeurones[j];
-						}
+						weights[j] = weights[j] + stepLearning * expected[i] * inputs[j + i * nbParameters];
 					}
 
-					//normalement counter est à 0, mais on s'en assure
-					counter = 0;
-					nox = 0;
+					w0 = w0 + stepLearning * expected[i] * x0;
 
-					//lorsqu'on a tous les deltas, on ajuste les w
-					//pour chaque couche
-					for (int i = 0; i < nbLayers; ++i)
+					/*
+					for(int i = 0; i < nbParameters; ++i)
 					{
-						//pour chaque neurone de la couche en cours
-						for (int j = 0; j < layersNeurones[i]; ++j)
-						{
-							if (i == 0)
-							{
-								//si première, on fait en fonction du nombre de paramètres (+ neurone de biais)
-								for (int k = 0; k < nbParameters + 1; ++k)
-								{
-									weights[counter] -= stepLearning * x_li[nox + k] * d_li[d_li.size() - (nox + 1)];
-									counter++;
-								}
-								nox += nbParameters + 1;
-							}
-							else
-							{
-								//sinon on fait selon le nombre de neurones dans la couche d'avant
-								for (int k = 0; k < layersNeurones[i - 1]; ++i)
-								{
-									weights[counter] -= stepLearning * x_li[nox + k] * d_li[d_li.size() - (nox + 1 + j)];
-									counter++;
-								}
-								nox += layersNeurones[i - 1];
-							}
-						}
-						lastLayerNb = layersNeurones[i];
+						logFile << "Weight " << i << " : " << weights[i] << std::endl;
 					}
 
-					//pour la dernière couche
-					for (int i = 0; i < lastLayerNb; ++i)
-					{
-						weights[counter] -= stepLearning * x_li[nox + i] * d_li[d_li.size() - 1];
-						counter++;
-					}
-					w0 -= stepLearning * d_li[d_li.size() - 1];
+					logFile << std::endl;*/
 				}
 			}
 
@@ -492,71 +374,576 @@ extern "C" {
 			++iteration;
 		}
 
-		//je sais pas quoi return ici du coup j'ai laissé comme c'était
-		return &(realResult[0]);
+		//logFile << "Whole necessary iteration (" << iteration <<") : DONE" << std::endl;
 
-		/*
-		C'est éminemment le bordel niveau index des vecteurs, mais ce qu'il faut comprendre c'est que : 
-		- weights doit être rangé de la sorte : 
-		_ [w_000, w_001, w_002, ..., w_010, w_011, ..., w_100, w_101, ...]
-		_ avec w_lij où l est le numéro de la couche, i est le numéro du neurone vers lequel pointe le poids et j est le numéro du neurone pointant vers i
-		_ pour chaque neurone donc se suivront les poids de tous les neurones de la couche d'avant allant vers lui
-		- x_li correspond au résultat de chaque neurone vu par les autres, c'est-à-dire :
-		- pour l = 0, ce sera juste les paramètres tels quels
-		_ après, ce sera la sigmoïde (tanh) de la somme des w * x de la couche d'avant
-		_ le dernier x_li correspond au résultat final du perceptron
-		- x_li est rangé dans l'ordre des neurones c'est-à-dire : 
-		_ [x_00, x_01, x_02, ..., x_10, x_11, ...]
-		_ avec x_li où l est le numéro de la couche (démarrant à la couche des paramètres + 1 avec le biais)
-		_ et i et le numéro du neurone dans la couche l
-		- d_li est le delta de chacun des neurones, mais pris à l'envers car parcouru depuis la fin lors du calcul
-		_ [d, d_(L)(N1), d_(L)(N1-1), ..., d_(L)(0), d_(L-1)(N2), ..., d_00]
-		_ avec d_li où l est le numéro de la couche parcourue jusqu'à la première car les entrées n'ont pas de delta (pas d'erreur sur les entrées logique)
-		_ et i est le numéro du neurone de la couche parcourue
-		- d_li est donc parcouru dans le sens inverse de x_li et à chaque x_li (hormis pour les entrées) correspond un d_li
-
-		- Concernant "counter" : 
-		_ counter permet de parcourir les poids dans l'ordre pour le calcul des x_li
-		_ à la fin du calcul des x_li, counter est normalement au tout dernier poids
-		_ on reparcoure les poids dans l'autre sens pour calculer les d_li de chaque neurone
-		_ enfin on reparcoure les poids dans l'ordre pour les mettre à jour
-
-		- Concernent "nbx" :
-		_ il permet lors du calcul des x_li de ne parcourir que les neurones de la couche précédente
-		_ à la fin du calcul des x_li de chaque couche, on ajoute à nbx le nombre de neurones de la couche d'avant
-
-		- Concernant "nbd" : 
-		_ il fonctionne exactement de la même manière que nbx mais pour les d_li
-
-		- Concernant "nox" :
-		_ il permet de reparcourir le vecteur des x_li dans l'autre sens pour le calcul des d_li
-		_ à la fin du calcul des d_li, nox est normalement à 0 puisqu'on à reparcouru tous les x_li pour calculer les d_li correspondants
-		_ pour la mise à jour des poids, il sert à parcourir les x_li et d_li :
-		~ pour les x_li, il nous faut les x_li de la couche précédente participant à un neurone de la couche en cours
-		~ on parcoure donc x_li[nox + k] avec k allant de 0 au nombre de neurones de la couche précédente
-		~ et nox étant égal pour une couche donnée à la somme du nombre de neurones sur toutes les couches précédentes
-		~ pour démarrer au bon neurone
-
-		~ pour les d_li c'est plus simple, il nous faut juste le neurone parcouru sur la couche en cours
-		~ donc on a d_li[d_li.size() - (nox + 1 + j)] avec j allant de 0 au nombre de neurones sur la couche en cours
-		*/
-	}
-
-	// Test marshalling
-	float* TestRefArrayOfInts(int** ppArray, int* pSize)
-	{
-		float* result = new float[2];
-		result[0] = 0;
-		for (int i = 0; i < 10; ++i)
+		/*for(int i = 0; i < nbParameters; ++i)
 		{
-			std::cout << (*ppArray)[i];
-			result[0] = result[0] + 2;
-			std::cout << "      SUM : " << result[0] << std::endl;
+			logFile << "Weight " << i << " : " << weights[i] << std::endl;
+		}*/
+
+		float* resultWeight = new float[nbParameters + 1];
+		
+		for(int i = 0; i < nbParameters; ++i)
+		{
+			resultWeight[i] = weights[i];
 		}
 
-		std::cout << result[0] << std::endl;
-		result[1] = 32.5f;
+		// Release memory
+		for(int i = 0; i < nativeInputs.size(); ++i)
+		{
+			Sample* s = nativeInputs[i];
+			nativeInputs.erase(nativeInputs.begin() + i);
+			delete s;
+		}
 
-		return result;
+		resultWeight[nbParameters] = w0;
+		//logFile.close();
+		return resultWeight;
+	}
+
+	Eigen::MatrixXf pointerToMatrix(float* m, int rows, int cols)
+	{
+		Eigen::MatrixXf mat(rows, cols);
+
+		for (int i = 0; i < rows; ++i)
+		{
+			for (int j = 0; j < cols; ++j)
+			{
+				mat(i, j) = m[i * cols + j];
+			}
+		}
+
+		return mat;
+	}
+
+	float* MLPerceptronClassification(float* inputs, float* expected, float* weights, int* layersNeurones, int nbParameters, int nbSample, int nbLayers, float stepLearning, int nbIteration, float tolerance)
+	{
+		int countNeurones = nbParameters;
+		int maxNeurone = 0;
+		for (int i = 0; i < nbLayers; ++i)
+		{
+			countNeurones += layersNeurones[i];
+			if (layersNeurones[i] > maxNeurone)
+			{
+				maxNeurone = layersNeurones[i];
+			}
+		}
+
+		// Initialize weight with random between -1 and 1
+		int countWeight = makeRandomWeight(weights);
+
+		Eigen::MatrixXf samples = pointerToMatrix(inputs, nbSample, nbParameters);
+		Eigen::MatrixXf W = pointerToMatrix(weights, nbLayers - 1, maxNeurone * maxNeurone);
+		Eigen::MatrixXf x_li(nbLayers, maxNeurone);
+		Eigen::MatrixXf d_li(nbLayers - 1, maxNeurone);
+		Eigen::MatrixXf y(nbSample, 1);
+
+		float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1 - (-1))));
+				
+		int iteration = 0;
+		bool needToContinue;
+		float result;
+
+		while (iteration < nbIteration)
+		{
+			needToContinue = false;
+
+			//pour chaque sample d'entraînement
+			for (int i = 0; i < nbSample; ++i)
+			{
+				//pour chaque paramètre (plus neurone de biais) on ajoute les entrées dans le vecteur des x_li
+				for (int j = 0; j < nbParameters; ++j)
+				{
+					x_li(0, j) = samples(i, j);		//chaque entrée
+				}
+
+				//pour chaque couche de notre perceptron
+				for (int j = 1; j < nbLayers - 1; ++j)
+				{
+					//pour chaque neurone de la couche en cours
+					for (int k = 0; k < layersNeurones[j]; ++k)
+					{
+						result = 0.f;
+
+						//pour chaque x de la couche d'avant, on ajoute le x * w
+						for (int l = 0; l < layersNeurones[j - 1]; ++l)
+						{
+							result += x_li(j - 1, l) * W(j - 1, k + l * layersNeurones[j]);
+						}
+						result = tanh(result);								//sigmoïde de la somme pondérée
+						x_li(j, k) = result;								//on ajoute le x au vecteur des x_li						
+					}
+				}
+
+				//calcule final à partir des x de la dernière couche
+				result = 0.f;
+				for (int l = 0; l = layersNeurones[nbLayers - 2]; ++l)
+				{
+					result += x_li(nbLayers - 2, l) * W(nbLayers - 2, l);
+				}
+
+				//pour classification, on applique la sigmoïde à la sortie, pas pour la régression
+				result -= w0;
+				result = tanh(result);
+				x_li(nbLayers - 1, 0) = result;
+
+				//si pas satisfait du résultat, rétropropagation du gradient
+				if (std::abs(result - y(i)) > tolerance)
+				{
+					needToContinue = true;									//on doit continuer l'apprentissage
+
+					//calcul du delta de la dernière couche (calcul différent pour la régression)
+					float delta = (1 - pow(x_li(nbLayers - 1, 0), 2)) * (x_li(nbLayers - 1, 0) - y(i));
+					d_li(nbLayers - 1, 0) = delta;
+
+					//pour chaque couche en partant de la dernière
+					for (int j = nbLayers - 1; j > 0; --j)
+					{
+						//pour chaque neurone de la couche en partant du dernier
+						for (int k = 0; k < layersNeurones[j - 1]; ++k)
+						{
+							delta = 0;
+							//pour chaque neurone vers lequel pointe de neurone en cours
+							for (int l = 0; l < layersNeurones[j]; ++l)
+							{
+								delta += W(j - 1, k + l * layersNeurones[j]) * d_li(j, l);			//on décrémente counter pour être au bon poids
+							}
+							delta *= (1 - pow(x_li(j - 1, k), 2));
+
+							d_li(j - 1, k) = delta;
+						}
+					}
+
+					//lorsqu'on a tous les deltas, on ajuste les w
+					//pour chaque couche
+					for (int j = 0; j < nbLayers - 1; ++j)
+					{
+						//pour chaque neurone de la couche en cours
+						for (int k = 0; k < layersNeurones[j + 1]; ++k)
+						{
+							for (int l = 0; l < layersNeurones[j]; ++l)
+							{
+								W(j, k + l * layersNeurones[j + 1]) -= stepLearning * x_li(j, l) * d_li(j + 1, l);
+							}
+						}
+					}
+
+					//pour le neurone de biais
+					w0 -= stepLearning * d_li(nbLayers - 1, 0);
+				}
+			}
+
+			if (!needToContinue)
+			{
+				break;
+			}
+
+			++iteration;
+		}
+
+		return W.data();
+	}
+
+	Eigen::MatrixXf initializeClusterRepresentative(Eigen::MatrixXf inputs, int cluster, int nbParameters, int nbSamples)
+	{
+		Eigen::MatrixXf rpz(cluster, nbParameters);
+		Eigen::MatrixXf extrema(nbParameters, 2);
+
+		for (int i = 0; i < nbParameters; ++i)
+		{
+			extrema(i, 0) = inputs(0, i);
+			extrema(i, 1) = inputs(0, i);
+		}
+
+		for (int i = 1; i < nbSamples; ++i)
+		{
+			for (int j = 0; j < nbParameters; ++j)
+			{
+				if (inputs(i, j) < extrema(j, 0))
+				{
+					extrema(j, 0) = inputs(i, j);
+				}
+				if (inputs(i, j) > extrema(j, 1))
+				{
+					extrema(j, 1) = inputs(i, j);
+				}
+			}
+		}
+
+		srand(static_cast <unsigned> (time(0)));
+
+		for (int i = 0; i < cluster; ++i)
+		{
+			for (int j = 0; j < nbParameters; ++j)
+			{
+				rpz(i, j) = extrema(j, 0) + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (extrema(j, 1) - extrema(j, 0))));
+			}
+			//rpz(i, nbParameters) = i;
+		}
+
+		return rpz;
+	}
+
+	float* RBFNaiveTraining(float gamma, float* inputs, float* expected, int nbParameters, int nbSamples, int nbOutputs)
+	{
+		Eigen::MatrixXf phi(nbSamples, nbSamples);
+		Eigen::MatrixXf weights(nbSamples, nbOutputs);
+		Eigen::MatrixXf outputs(nbSamples, nbOutputs);
+		Eigen::MatrixXf samples(nbSamples, nbParameters);
+
+		float dist = 0.f;
+
+		samples = pointerToMatrix(inputs, nbSamples, nbParameters);
+		outputs = pointerToMatrix(expected, nbSamples, nbOutputs);
+
+		for (int i = 0; i < nbSamples; ++i)
+		{
+			for (int j = 0; j < nbSamples; ++j)
+			{
+				dist = 0.f;
+
+				for (int k = 0; k < nbParameters; ++k)
+				{
+					dist += pow(samples(i, k) - samples(j, k), 2);
+				}
+
+				phi(i, j) = exp(-gamma * dist);
+			}
+		}
+
+		weights = phi.inverse() * outputs;
+
+		return weights.data();
+	}
+
+	float* RBFRegression(float gamma, float* inputs, float* data, float* weights, int nbParameters, int nbSamples, int nbOutputs)
+	{
+		Eigen::MatrixXf dat(nbParameters, 1);
+		Eigen::MatrixXf X(nbSamples, nbParameters);
+		Eigen::MatrixXf W(nbSamples, nbOutputs);
+		Eigen::MatrixXf result(nbOutputs, 1);
+		float res, dist;
+
+		X = pointerToMatrix(inputs, nbSamples, nbParameters);
+		W = pointerToMatrix(weights, nbSamples, nbOutputs);
+		dat = pointerToMatrix(data, nbParameters, 1);
+
+		for (int i = 0; i < nbOutputs; ++i)
+		{
+			res = 0.f;
+			for (int j = 0; j < nbSamples; ++j)
+			{
+				dist = 0.f;
+				for (int k = 0; k < nbParameters; ++k)
+				{
+					dist += pow(X(j, k) - dat(k, 1), 2);
+				}
+				res += W(j, i) * exp(-gamma * dist);
+			}
+			result(i, 1) = res;
+		}
+
+		return result.data();
+	}
+
+	float* RBFClassification(float gamma, float* inputs, float* data, float* weights, int nbParameters, int nbSamples, int nbOutputs)
+	{
+		Eigen::MatrixXf dat(nbParameters, 1);
+		Eigen::MatrixXf X(nbSamples, nbParameters);
+		Eigen::MatrixXf W(nbSamples, nbOutputs);
+		Eigen::MatrixXf result(nbOutputs, 1);
+		float res, dist;
+
+		X = pointerToMatrix(inputs, nbSamples, nbParameters);
+		W = pointerToMatrix(weights, nbSamples, nbOutputs);
+		dat = pointerToMatrix(data, nbParameters, 1);
+
+		for (int i = 0; i < nbOutputs; ++i)
+		{
+			res = 0.f;
+			for (int j = 0; j < nbSamples; ++j)
+			{
+				dist = 0.f;
+				for (int k = 0; k < nbParameters; ++k)
+				{
+					dist += pow(X(j, k) - dat(k, 1), 2);
+				}
+				res += W(j, i) * exp(-gamma * dist);
+			}
+			result(i, 1) = res < 0.f ? -1.f : res > 0.f ? 1.f : 0.f;
+		}
+
+		return result.data();
+	}
+
+	float* RBFkMeansTraining(float epsilon, int cluster, float gamma, float* inputs, float* expected, int nbParameters, int nbSamples, int nbOutputs)
+	{
+		Eigen::MatrixXf phi(nbSamples, cluster);
+		Eigen::MatrixXf outputs(nbSamples, nbOutputs);
+		Eigen::MatrixXf samples(nbSamples, nbParameters);
+		Eigen::MatrixXf µ(cluster, nbParameters);
+		Eigen::MatrixXf clust(nbSamples, 2);
+		Eigen::MatrixXf sampleCluster(cluster, 1);
+		Eigen::MatrixXf barycentres(cluster, nbParameters);
+	
+		float dist;
+		bool converge = false;
+		bool emptyCluster = false;
+		int nbC;
+
+		samples = pointerToMatrix(inputs, nbSamples, nbParameters);
+		outputs = pointerToMatrix(expected, nbSamples, nbOutputs);
+
+		Eigen::MatrixXf rpz = initializeClusterRepresentative(samples, cluster, nbParameters, nbSamples);
+
+		while (!converge)
+		{
+			for (int i = 0; i < cluster; ++i)
+			{
+				sampleCluster(i, 0) = 0;
+			}
+
+			for (int i = 0; i < nbSamples; ++i)
+			{
+				clust(i, 1) = FLT_MAX;
+				for (int j = 0; j < cluster; ++j)
+				{
+					dist = 0.f;
+					for (int k = 0; k < nbParameters; ++k)
+					{
+						dist += pow(samples(i, k) - rpz(j, k), 2);
+					}
+					if (dist < clust(i, 1))
+					{
+						clust(i, 0) = j;
+						clust(i, 1) = dist;
+						sampleCluster(j, 0)++;
+					}
+				}
+			}
+
+			for (int i = 0; i < cluster; ++i)
+			{
+				if (sampleCluster(i, 0) == 0)
+				{
+					Eigen::MatrixXf tmpRpz = initializeClusterRepresentative(samples, 1, nbParameters, nbSamples);
+					for (int j = 0; j < nbParameters; ++j)
+					{
+						rpz(i, j) = tmpRpz(1, j);
+					}
+					emptyCluster = true;
+				}
+			}
+
+			if (emptyCluster)
+			{
+				emptyCluster = false;
+				continue;
+			}
+
+			converge = true;
+			for (int i = 0; i < cluster; ++i)
+			{
+				nbC = 0;
+				for (int j = 0; j < nbParameters; ++j)
+				{
+					barycentres(i, j) = 0.f;
+				}
+
+				for (int j = 0; j < nbSamples; ++j)
+				{
+					if (clust(j, 0) == i)
+					{
+						for (int k = 0; k < nbParameters; ++k)
+						{
+							barycentres(i, k) += samples(j, k);
+							++nbC;
+						}
+					}
+				}
+
+				dist = 0.f;
+				for (int j = 0; j < nbParameters; ++j)
+				{
+					barycentres(i, j) /= nbC;
+					dist += pow(barycentres(i, j) - rpz(i, j), 2);
+				}
+				dist = sqrt(dist);
+
+				for (int j = 0; j < nbParameters; ++j)
+				{
+					rpz(i, j) = barycentres(i, j);
+				}
+
+				if (dist > epsilon)
+				{
+					converge = false;
+				}
+			}
+		}
+
+		for (int i = 0; i < cluster; ++i)
+		{
+			for (int j = 0; j < nbSamples; ++j)
+			{
+				if (clust(j, 0) == i)
+				{
+					for (int k = 0; k < nbParameters; ++k)
+					{
+						µ(i, k) += samples(i, k);
+					}
+				}
+			}
+
+			for (int k = 0; k < nbParameters; ++k)
+			{
+				µ(i, k) /= sampleCluster(i, 0);
+			}
+		}
+
+		for (int i = 0; i < nbSamples; ++i)
+		{
+			for (int j = 0; j < cluster; ++j)
+			{
+				dist = 0.f;
+
+				for (int k = 0; k < nbParameters; ++k)
+				{
+					dist += pow(samples(i, k) - µ(j, k), 2);
+				}
+
+				phi(i, j) = exp(-gamma * dist);
+			}
+		}
+
+		Eigen::MatrixXf weights = (phi.transpose() * phi).inverse() * phi.transpose() * outputs;
+
+		return weights.data();
+	}
+
+	float* MLPerceptronRegression(float* inputs, float* expected, float* weights, int* layersNeurones, int nbParameters, int nbSample, int nbLayers, float stepLearning, int nbIteration, float tolerance)
+	{
+		int countNeurones = nbParameters;
+		int maxNeurone = 0;
+		for (int i = 0; i < nbLayers; ++i)
+		{
+			countNeurones += layersNeurones[i];
+			if (layersNeurones[i] > maxNeurone)
+			{
+				maxNeurone = layersNeurones[i];
+			}
+		}
+
+		// Initialize weight with random between -1 and 1
+		int countWeight = makeRandomWeight(weights);
+
+		Eigen::MatrixXf samples = pointerToMatrix(inputs, nbSample, nbParameters);
+		Eigen::MatrixXf W = pointerToMatrix(weights, nbLayers - 1, maxNeurone * maxNeurone);
+		Eigen::MatrixXf x_li(nbLayers, maxNeurone);
+		Eigen::MatrixXf d_li(nbLayers - 1, maxNeurone);
+		Eigen::MatrixXf y(nbSample, 1);
+
+		float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1 - (-1))));
+
+		int iteration = 0;
+		bool needToContinue;
+		float result;
+
+		while (iteration < nbIteration)
+		{
+			needToContinue = false;
+
+			//pour chaque sample d'entraînement
+			for (int i = 0; i < nbSample; ++i)
+			{
+				//pour chaque paramètre (plus neurone de biais) on ajoute les entrées dans le vecteur des x_li
+				for (int j = 0; j < nbParameters; ++j)
+				{
+					x_li(0, j) = samples(i, j);		//chaque entrée
+				}
+
+				//pour chaque couche de notre perceptron
+				for (int j = 1; j < nbLayers - 1; ++j)
+				{
+					//pour chaque neurone de la couche en cours
+					for (int k = 0; k < layersNeurones[j]; ++k)
+					{
+						result = 0.f;
+
+						//pour chaque x de la couche d'avant, on ajoute le x * w
+						for (int l = 0; l < layersNeurones[j - 1]; ++l)
+						{
+							result += x_li(j - 1, l) * W(j - 1, k + l * layersNeurones[j]);
+						}
+						result = tanh(result);								//sigmoïde de la somme pondérée
+						x_li(j, k) = result;								//on ajoute le x au vecteur des x_li						
+					}
+				}
+
+				//calcule final à partir des x de la dernière couche
+				result = 0.f;
+				for (int l = 0; l = layersNeurones[nbLayers - 2]; ++l)
+				{
+					result += x_li(nbLayers - 2, l) * W(nbLayers - 2, l);
+				}
+
+				//pour classification, on applique la sigmoïde à la sortie, pas pour la régression
+				result -= w0;
+				x_li(nbLayers - 1, 0) = result;
+
+				//si pas satisfait du résultat, rétropropagation du gradient
+				if (std::abs(result - y(i)) > tolerance)
+				{
+					needToContinue = true;									//on doit continuer l'apprentissage
+
+					float delta = x_li(nbLayers - 1, 0) - y(i);
+					d_li(nbLayers - 1, 0) = delta;
+
+					//pour chaque couche en partant de la dernière
+					for (int j = nbLayers - 1; j > 0; --j)
+					{
+						//pour chaque neurone de la couche en partant du dernier
+						for (int k = 0; k < layersNeurones[j - 1]; ++k)
+						{
+							delta = 0;
+							//pour chaque neurone vers lequel pointe de neurone en cours
+							for (int l = 0; l < layersNeurones[j]; ++l)
+							{
+								delta += W(j - 1, k + l * layersNeurones[j]) * d_li(j, l);			//on décrémente counter pour être au bon poids
+							}
+							delta *= (1 - pow(x_li(j - 1, k), 2));
+
+							d_li(j - 1, k) = delta;
+						}
+					}
+
+					//lorsqu'on a tous les deltas, on ajuste les w
+					//pour chaque couche
+					for (int j = 0; j < nbLayers - 1; ++j)
+					{
+						//pour chaque neurone de la couche en cours
+						for (int k = 0; k < layersNeurones[j + 1]; ++k)
+						{
+							for (int l = 0; l < layersNeurones[j]; ++l)
+							{
+								W(j, k + l * layersNeurones[j + 1]) -= stepLearning * x_li(j, l) * d_li(j + 1, l);
+							}
+						}
+					}
+
+					//pour le neurone de biais
+					w0 -= stepLearning * d_li(nbLayers - 1, 0);
+				}
+			}
+
+			if (!needToContinue)
+			{
+				break;
+			}
+
+			++iteration;
+		}
+
+		return W.data();
 	}
 }
