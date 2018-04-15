@@ -938,4 +938,163 @@ extern "C" {
 
 		return W.data();
 	}
+
+
+	//////////////////// TEST MLP Antho ////////////////////
+
+	// Constructor neural network
+	void ConstructorNeuralNetwork(float stepLearningParam)
+	{
+		executed = false;
+		stepLearning = stepLearningParam;
+	}
+
+	float Sigmoide(float value)
+	{
+		return 1 / (1 + exp(-1 * value));
+	}
+
+	int AddNeuron(int indexCouche, int nbNeurone)
+	{
+		if (!executed)
+		{
+			if (indexCouche >= 0 && indexCouche < layers.size() && nbNeurone > 0)
+			{
+				layers[indexCouche].reserve(nbNeurone);
+			}
+
+			return 0;
+		}
+		else
+		{
+			std::cout << "Network already instanciated." << std::endl;
+			return - 1;
+		}
+	}
+
+	int AddAllNeuron(std::vector<int> neuronePerLayers)
+	{
+		if (!executed)
+		{
+			if (neuronePerLayers.size() == layers.size())
+			{
+				for (int i = 0; i < neuronePerLayers.size(); ++i)
+				{
+					int result = AddNeuron(i, neuronePerLayers[i]);
+
+					if (result == -1)
+					{
+						return -1;
+					}
+				}
+
+				return 0;
+			}
+			else
+			{
+				std::cout << "Network architecture doesn't correspond with parameters." << std::endl;
+				return -1;
+			}
+		}
+	}
+
+	int InitNeuralNetwork()
+	{
+		for (int i = 0; i < layers.size(); ++i)
+		{
+			if (layers[i].size() <= 0)
+			{
+				std::cout << "Layer requires at least one neuron. Layer " << i << std::endl;
+				return -1;
+			}
+		}
+
+		try
+		{
+			if (!executed)
+			{
+				executed = true;
+				// Loop on each layer
+				for (int i = 0; i < layers.size(); ++i)
+				{
+					std::vector<float> allWeightPerNeuron; // Correspond to all weight of one neuron between the current layer and the next layer
+					std::vector<std::vector<float>> allWeightPerNeuronPerLayer; // Correspond to all weight of all neuron between the current layer and the next layer
+					std::vector<float> addValues; // Correspond to neuron's values of the current layer
+
+					// Loop on each neuron of current layer
+					for (int j = 0; j < layers[i].size(); ++j)
+					{
+						// Check if we are at the last layer, because last layer doesn't have link with a next layer
+						if (i != layers.size() - 1)
+						{
+							// Add weight for each neuron of the current layer to each neuron of the next layer
+							for (int k = 0; k < layers[i + 1].size(); ++k)
+							{
+								// Initialize weight's value to 0.5
+								allWeightPerNeuron.push_back(0.5f);
+							}
+
+							// Add all weight of the current neuron to the current layer
+							allWeightPerNeuronPerLayer.push_back(allWeightPerNeuron);
+							allWeightPerNeuron.clear();
+						}
+
+						// Initialize value of current neuron to 0
+						addValues.push_back(0.f);
+
+						if (i != layers.size() - 1)
+						{
+							weights.push_back(allWeightPerNeuronPerLayer);
+						}
+
+						// Add values of all neuron of this layer
+						values.push_back(addValues);
+					}
+				}
+			}
+
+			return 0;
+		}
+		catch (std::exception &e)
+		{
+			std::cout << "InitNeuralNetwork ERROR : " << e.what() << std::endl;
+			return -1;
+		}
+	}
+
+	// Pass the value of each neuron of the first layer, and all values of each neuron of each layer will be calculated (here we use Sigmoide as activation function)
+	int Propagation(std::vector<float> inputLayer)
+	{
+		if (executed)
+		{
+			// Check if the layer pass in parameter has the same number of neuron
+			if (inputLayer.size() == layers[0].size())
+			{
+				// Initialize the neuron's values of the first layer with values pass in parameter
+				for (int i = 0; i < inputLayer.size(); ++i)
+				{
+					values[0][i] = inputLayer[i];
+				}
+
+				// Loop on each layers, we start at hidden layer 1 because we already initialize the first layer
+				for (int i = 1; i < values.size(); ++i)
+				{
+					// Loop on each neurons value
+					for (int j = 0; j < values[i].size(); ++j)
+					{
+						float value = 0.f;
+
+						// Loop on previous layer because we need the value of each neuron of the previous layer to calculate each neuron of the actual layer
+						for (int k = 0; k < values[i - 1].size(); ++k)
+						{
+							value += values[i - 1][k] * weights[i - 1][k][j];
+						}
+
+						// Apply Sigmoid function to the weighted sum (somme ponderee = weighted sum ??)
+						values[i][j] = Sigmoide(value);
+					}
+				}
+			}
+		}
+	}
 }

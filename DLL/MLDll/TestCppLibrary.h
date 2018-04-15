@@ -6,7 +6,15 @@
 #define TESTFUNCDLL_API __declspec(dllimport) 
 #endif
 
+#include <vector>
+
 extern "C" {
+	std::vector<std::vector<int>> layers;
+	float stepLearning = 0.05f;
+	std::vector<std::vector<std::vector<float>>> weights; // Correspond to all weight of all neuron with the next layer, of all layer
+	std::vector<std::vector<float>> values;
+	bool executed;
+
     TESTFUNCDLL_API float TestMultiply(float a, float b);
     TESTFUNCDLL_API float TestDivide(float a, float b);
 	TESTFUNCDLL_API float* LinearRegression(float* xCollection, float* yCollection, int dataSize);
