@@ -9,6 +9,7 @@ float error = 0.05f;
 std::vector<std::vector<std::vector<float>>> weights; // Correspond to all weight of all neuron with the next layer, of all layer
 std::vector<std::vector<float>> values; // Correspond to neuron's value of each layer
 bool executed;
+float biasValue = 1.f;
 
 // Constructor neural network
 void ConstructorNeuralNetwork(float stepLearningParam, int nbLayers)
@@ -24,6 +25,11 @@ void ConstructorNeuralNetwork(float stepLearningParam, int nbLayers)
 			layers.push_back(vec);
 		}
 	}
+}
+
+float TanH(float value)
+{
+	return tanh(value);
 }
 
 float Sigmoide(float value)
@@ -60,7 +66,7 @@ int AddAllNeuron(std::vector<int> neuronePerLayers)
 		{
 			for (int i = 0; i < neuronePerLayers.size(); ++i)
 			{
-				int result = AddNeuron(i, neuronePerLayers[i]);
+				int result = AddNeuron(i, neuronePerLayers[i]); // +1 for bias to all hidden layers and input layer
 
 				if (result == -1)
 				{
@@ -72,7 +78,7 @@ int AddAllNeuron(std::vector<int> neuronePerLayers)
 		}
 		else
 		{
-			std::cout << "Network architecture doesn't correspond with parameters." << std::endl;
+			std::cout << "ADDALLNEURON : Network architecture doesn't correspond with parameters." << std::endl;
 			return -1;
 		}
 	}
@@ -110,6 +116,8 @@ int InitNeuralNetwork()
 						// Add weight for each neuron of the current layer to each neuron of the next layer
 						for (int k = 0; k < layers[i + 1].size(); ++k)
 						{
+							if (i < layers.size() - 2 && k == layers[i + 1].size() - 1)
+								continue;
 							// Initialize weight's value to 0.5
 							allWeightPerNeuron.push_back(0.5f);
 						}
@@ -119,8 +127,16 @@ int InitNeuralNetwork()
 						allWeightPerNeuron.clear();
 					}
 
-					// Initialize value of current neuron to 0
-					addValues.push_back(0.f);
+					if (layers[i].size() - 1 != j || i == layers.size() - 1)
+					{
+						// Initialize value of current neuron to 0
+						addValues.push_back(0.f);
+					}
+					else//(layers[i].size() - 1 == j && i != layers.size() - 1)
+					{
+						// If it's bias
+						addValues.push_back(biasValue);
+					}
 
 					if (j == layers[i].size() - 1)
 					{
@@ -152,7 +168,7 @@ int Propagation(std::vector<float> inputLayer)
 	if (executed)
 	{
 		// Check if the layer pass in parameter has the same number of neuron
-		if (inputLayer.size() == layers[0].size())
+		if (inputLayer.size() == layers[0].size() - 1)
 		{
 			// Initialize the neuron's values of the first layer with values pass in parameter
 			for (int i = 0; i < inputLayer.size(); ++i)
@@ -166,6 +182,11 @@ int Propagation(std::vector<float> inputLayer)
 				// Loop on each neurons value
 				for (int j = 0; j < values[i].size(); ++j)
 				{
+					if (values.size() - 1 != i && values[i].size() - 1 == j)
+					{
+						continue;
+					}
+
 					float value = 0.f;
 
 					// Loop on previous layer because we need the value of each neuron of the previous layer to calculate each neuron of the actual layer
@@ -183,7 +204,7 @@ int Propagation(std::vector<float> inputLayer)
 		}
 		else
 		{
-			std::cout << "Network architecture doesn't correspond with parameters." << std::endl;
+			std::cout << " PROPAGATION : Network architecture doesn't correspond with parameters." << std::endl;
 			return -1;
 		}
 	}
@@ -229,6 +250,9 @@ int Retropropagation(std::vector<float> outputLayer)
 					float sum = 0.f;
 					for (int k = 0; k < values[i].size(); ++k)
 					{
+						if (i != values.size() - 1 && k == values[i].size() - 1)
+							continue;
+
 						sum += values[i][k] * weights[i - 1][j][k];
 					}
 					values[i - 1][j] = sum;
@@ -239,7 +263,7 @@ int Retropropagation(std::vector<float> outputLayer)
 		}
 		else
 		{
-			std::cout << "Network architecture doesn't correspond with parameters." << std::endl;
+			std::cout << "RETROPOPAGATION : Network architecture doesn't correspond with parameters." << std::endl;
 			return -1;
 		}
 	}
@@ -250,11 +274,13 @@ int Retropropagation(std::vector<float> outputLayer)
 	}
 }
 
+
+
 int Learn(std::vector<float> inputLayer, std::vector<float> outputLayer)
 {
 	if (executed)
 	{
-		if (inputLayer.size() == layers[0].size() && outputLayer.size() == layers[layers.size() - 1].size())
+		if (inputLayer.size() == layers[0].size() - 1 && outputLayer.size() == layers[layers.size() - 1].size())
 		{
 			Propagation(inputLayer);
 			Retropropagation(outputLayer);
@@ -263,7 +289,7 @@ int Learn(std::vector<float> inputLayer, std::vector<float> outputLayer)
 		}
 		else
 		{
-			std::cout << "Network architecture doesn't correspond with parameters." << std::endl;
+			std::cout << "LEARN : Network architecture doesn't correspond with parameters." << std::endl;
 			return -1;
 		}
 	}
@@ -327,7 +353,7 @@ int main()
 	nbNeuronPerLayer.push_back(3);
 	nbNeuronPerLayer.push_back(5);
 	nbNeuronPerLayer.push_back(7);
-	nbNeuronPerLayer.push_back(3);
+	nbNeuronPerLayer.push_back(1);
 
 	res = AddAllNeuron(nbNeuronPerLayer);
 	if (res == -1)
@@ -347,11 +373,8 @@ int main()
 	std::vector<float> v1;
 	v1.push_back(1);
 	v1.push_back(0);
-	v1.push_back(1);
 	std::vector<float> v2;
 	v2.push_back(1);
-	v2.push_back(1);
-	v2.push_back(0);
 
 	Learn(v1, v2);
 	v1.clear();
@@ -360,10 +383,7 @@ int main()
 	// 2
 	v1.push_back(1);
 	v1.push_back(0);
-	v1.push_back(0);
 
-	v2.push_back(0);
-	v2.push_back(0);
 	v2.push_back(0);
 
 	Learn(v1, v2);
@@ -373,10 +393,7 @@ int main()
 	// 3
 	v1.push_back(0);
 	v1.push_back(0);
-	v1.push_back(0);
 
-	v2.push_back(1);
-	v2.push_back(0);
 	v2.push_back(1);
 
 	Learn(v1, v2);
@@ -386,10 +403,7 @@ int main()
 	// 4
 	v1.push_back(1);
 	v1.push_back(1);
-	v1.push_back(1);
 
-	v2.push_back(1);
-	v2.push_back(1);
 	v2.push_back(1);
 
 	Learn(v1, v2);
