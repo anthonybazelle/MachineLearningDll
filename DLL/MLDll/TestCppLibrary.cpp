@@ -538,16 +538,16 @@ extern "C" {
 
 	Eigen::MatrixXf initializeClusterRepresentative(Eigen::MatrixXf inputs, int cluster, int nbParameters, int nbSamples)
 	{
-		Eigen::MatrixXf rpz(cluster, nbParameters);
-		Eigen::MatrixXf extrema(nbParameters, 2);
+		Eigen::MatrixXf rpz(cluster, nbParameters);			//matrice des repréentants
+		Eigen::MatrixXf extrema(nbParameters, 2);			//extremums (minimum : 0, maximum : 1) des paramètres dans les exemples fournis
 
-		for (int i = 0; i < nbParameters; ++i)
+		for (int i = 0; i < nbParameters; ++i)				//initialisation des extremums
 		{
 			extrema(i, 0) = inputs(0, i);
 			extrema(i, 1) = inputs(0, i);
 		}
 
-		for (int i = 1; i < nbSamples; ++i)
+		for (int i = 1; i < nbSamples; ++i)					//attribution des extremums
 		{
 			for (int j = 0; j < nbParameters; ++j)
 			{
@@ -562,13 +562,13 @@ extern "C" {
 			}
 		}
 
-		srand(static_cast <unsigned> (time(0)));
+		srand(static_cast <unsigned> (time(0)));			//random des paramètres des représentants
 
-		for (int i = 0; i < cluster; ++i)
+		for (int i = 0; i < cluster; ++i)					//pour chaque cluster
 		{
-			for (int j = 0; j < nbParameters; ++j)
+			for (int j = 0; j < nbParameters; ++j)				//pour chaque paramètre
 			{
-				rpz(i, j) = extrema(j, 0) + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (extrema(j, 1) - extrema(j, 0))));
+				rpz(i, j) = extrema(j, 0) + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (extrema(j, 1) - extrema(j, 0))));	//attribution d'une coordonnée aléatoire dans le rectangle englobant
 			}
 			//rpz(i, nbParameters) = i;
 		}
@@ -670,111 +670,111 @@ extern "C" {
 
 	float* RBFkMeansTraining(float epsilon, int cluster, float gamma, float* inputs, float* expected, int nbParameters, int nbSamples, int nbOutputs)
 	{
-		Eigen::MatrixXf phi(nbSamples, cluster);
-		Eigen::MatrixXf outputs(nbSamples, nbOutputs);
-		Eigen::MatrixXf samples(nbSamples, nbParameters);
-		Eigen::MatrixXf µ(cluster, nbParameters);
-		Eigen::MatrixXf clust(nbSamples, 2);
-		Eigen::MatrixXf sampleCluster(cluster, 1);
-		Eigen::MatrixXf barycentres(cluster, nbParameters);
+		Eigen::MatrixXf phi(nbSamples, cluster);				//matrice Phi intermédiaire au calcul de W
+		Eigen::MatrixXf outputs(nbSamples, nbOutputs);			//matrice des sorties attendues du training
+		Eigen::MatrixXf samples(nbSamples, nbParameters);		//matrice des exemples de training
+		Eigen::MatrixXf µ(cluster, nbParameters);				//
+		Eigen::MatrixXf clust(nbSamples, 2);					//numéro du cluster d'appartenance de chaque exemple clust(i, 0) et distance à son représentant clust(i, 1)
+		Eigen::MatrixXf sampleCluster(cluster, 1);				//population de chaque cluster
+		Eigen::MatrixXf barycentres(cluster, nbParameters);		//barycentre de chaque cluster
 	
-		float dist;
-		bool converge = false;
-		bool emptyCluster = false;
-		int nbC;
+		float dist;												//distance euclidienne d'un exemple au représentant d'un cluster (locale)
+		bool converge = false;									//condition de convergence du modèle satisfaite ? (globale)
+		bool emptyCluster = false;								//un des clusters vide ? (locale)
 
 		samples = pointerToMatrix(inputs, nbSamples, nbParameters);
 		outputs = pointerToMatrix(expected, nbSamples, nbOutputs);
 
+		//initialisation des représentants des clusters
 		Eigen::MatrixXf rpz = initializeClusterRepresentative(samples, cluster, nbParameters, nbSamples);
 
 		while (!converge)
 		{
-			for (int i = 0; i < cluster; ++i)
+			for (int i = 0; i < cluster; ++i)									
 			{
-				sampleCluster(i, 0) = 0;
+				sampleCluster(i, 0) = 0;							//réinitialisation de la population de chaque cluster
 			}
 
-			for (int i = 0; i < nbSamples; ++i)
+			for (int i = 0; i < nbSamples; ++i)						//répartition de tous les exemples dans les clusters
 			{
 				clust(i, 1) = FLT_MAX;
 				for (int j = 0; j < cluster; ++j)
 				{
 					dist = 0.f;
-					for (int k = 0; k < nbParameters; ++k)
+					for (int k = 0; k < nbParameters; ++k)				//calcul de la distance euclidienne de l'exemple avec le représentant du cluster parcouru
 					{
-						dist += pow(samples(i, k) - rpz(j, k), 2);
+						dist += pow(samples(i, k) - rpz(j, k), 2);		
 					}
-					if (dist < clust(i, 1))
+
+					if (dist < clust(i, 1))								//si plus proche qu'avant : 
 					{
-						clust(i, 0) = j;
-						clust(i, 1) = dist;
-						sampleCluster(j, 0)++;
+						sampleCluster(clust(i, 0), 0)--;					//décrémentation de la population de l'ancien cluster
+						sampleCluster(j, 0)++;								//incrémentation de la population du nouveau cluster
+						clust(i, 0) = j;									//attribution du nouveau cluster
+						clust(i, 1) = dist;									//attribution de la nouvelle distance
 					}
 				}
 			}
 
-			for (int i = 0; i < cluster; ++i)
+			for (int i = 0; i < cluster; ++i)						//test de cluster vide (condition de non-convergence)						
 			{
-				if (sampleCluster(i, 0) == 0)
+				if (sampleCluster(i, 0) == 0)							//si un cluster vide
 				{
-					Eigen::MatrixXf tmpRpz = initializeClusterRepresentative(samples, 1, nbParameters, nbSamples);
-					for (int j = 0; j < nbParameters; ++j)
+					Eigen::MatrixXf tmpRpz = initializeClusterRepresentative(samples, 1, nbParameters, nbSamples);		//calcul d'un nouveau représentant 
+					for (int j = 0; j < nbParameters; ++j)																//attribution du nouveau représentant
 					{
-						rpz(i, j) = tmpRpz(1, j);
+						rpz(i, j) = tmpRpz(1, j);			
 					}
 					emptyCluster = true;
 				}
 			}
 
-			if (emptyCluster)
+			if (emptyCluster)										//si cluster vide, alors arrêt de l'itération et réattribution avec le(s) nouveau(x) représentant(s) calculé(s)
 			{
 				emptyCluster = false;
 				continue;
 			}
 
 			converge = true;
-			for (int i = 0; i < cluster; ++i)
+			for (int i = 0; i < cluster; ++i)						//calcul des barycentres de chaque cluster et remplacement des représentants
 			{
-				nbC = 0;
-				for (int j = 0; j < nbParameters; ++j)
+				for (int j = 0; j < nbParameters; ++j)					//calcul du barycentre
 				{
 					barycentres(i, j) = 0.f;
-				}
 
-				for (int j = 0; j < nbSamples; ++j)
-				{
-					if (clust(j, 0) == i)
+					for (int k = 0; k < nbSamples; ++k)
 					{
-						for (int k = 0; k < nbParameters; ++k)
+						if (clust(k, 0) == i)
 						{
-							barycentres(i, k) += samples(j, k);
-							++nbC;
+							barycentres(i, j) += samples(k, j);
 						}
 					}
+
+					barycentres(i, j) /= sampleCluster(i, 0);
 				}
 
-				dist = 0.f;
+				dist = 0.f;												//calcul de la distance euclidienne entre le représentant et le barycentre
 				for (int j = 0; j < nbParameters; ++j)
 				{
-					barycentres(i, j) /= nbC;
 					dist += pow(barycentres(i, j) - rpz(i, j), 2);
 				}
 				dist = sqrt(dist);
 
-				for (int j = 0; j < nbParameters; ++j)
+				for (int j = 0; j < nbParameters; ++j)					//remplacement du représentant par le barycentre
 				{
 					rpz(i, j) = barycentres(i, j);
 				}
 
-				if (dist > epsilon)
+				if (dist > epsilon)										//si la distance est supérieure à l'objectif de convergence => on ne sort pas du while 
 				{
 					converge = false;
 				}
 			}
 		}
 
-		for (int i = 0; i < cluster; ++i)
+		//CONVERGENCE => CALCULS FINAUX DES POIDS
+
+		for (int i = 0; i < cluster; ++i)								//calcul de la moyenne de la population de chaque cluster
 		{
 			for (int j = 0; j < nbSamples; ++j)
 			{
@@ -793,7 +793,7 @@ extern "C" {
 			}
 		}
 
-		for (int i = 0; i < nbSamples; ++i)
+		for (int i = 0; i < nbSamples; ++i)								//calcul de la matrice Phi servant au calcul des poids
 		{
 			for (int j = 0; j < cluster; ++j)
 			{
@@ -808,7 +808,7 @@ extern "C" {
 			}
 		}
 
-		Eigen::MatrixXf weights = (phi.transpose() * phi).inverse() * phi.transpose() * outputs;
+		Eigen::MatrixXf weights = (phi.transpose() * phi).inverse() * phi.transpose() * outputs;		//Calcul final de W = (tPhi * Phi)-1 * tPhi * Y
 
 		return weights.data();
 	}
