@@ -27,4 +27,6 @@ extern "C" {
 	TESTFUNCDLL_API float* RBFRegression(float gamma, float* inputs, float* data, float* weights, int nbParameters, int nbSamples, int nbOutputs);
 	TESTFUNCDLL_API float* RBFClassification(float gamma, float* inputs, float* data, float* weights, int nbParameters, int nbSamples, int nbOutputs);
 	TESTFUNCDLL_API float* RBFkMeansTraining(float epsilon, int cluster, float gamma, float* inputs, float* expected, int nbParameters, int nbSamples, int nbOutputs);
+	TESTFUNCDLL_API int InitNeuralNetwork(float initWeight, int* weightsPerLayerArray, int nbLayer, int activateFunc, float biasValue);
+	TESTFUNCDLL_API float* LearnMLP(int nbSample, float* inputs, const int nbInputParam, float* output, const int nbOutputParam, int nbIteration);
 }
