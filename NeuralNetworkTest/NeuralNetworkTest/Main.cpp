@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <iterator>
 
 
 
@@ -9,7 +10,51 @@ float error = 0.05f;
 std::vector<std::vector<std::vector<float>>> weights; // Correspond to all weight of all neuron with the next layer, of all layer
 std::vector<std::vector<float>> values; // Correspond to neuron's value of each layer
 bool executed;
-float biasValue = 1.f;
+//float biasValue = 1.f;
+float(*ActivateFunc)(float);
+
+
+void PrintValues()
+{
+	for (int i = 0, indexLayer = 1; i < values.size(); ++i, ++indexLayer)
+	{
+		std::cout << "Layer " << indexLayer << " :" << std::endl;
+		for (int j = 0; j < values[i].size(); ++j)
+		{
+			std::cout << "\tNeuron " << j << " value : " << values[i][j] << std::endl;
+		}
+		std::cout << std::endl;
+	}
+}
+
+void PrintWeights()
+{
+	for (int i = 0, indexLayer = 1; i < weights.size(); ++i, ++indexLayer)
+	{
+		std::cout << "Layer " << indexLayer << " :" << std::endl;
+		for (int j = 0; j < weights[i].size(); ++j)
+		{
+			std::cout << "\tNeuron " << j << " :" << std::endl;
+			for (int k = 0; k < weights[i][j].size(); ++k)
+			{
+				std::cout << "\t\tWeight " << k << " :" << weights[i][j][k] << std::endl;
+			}
+		}
+		std::cout << std::endl;
+	}
+}
+
+void PrintAll()
+{
+	std::cout << "All values :" << std::endl;
+	PrintValues();
+
+	std::cout << std::endl;
+
+	std::cout << "All weight :" << std::endl;
+	PrintWeights();
+}
+
 
 // Constructor neural network
 void ConstructorNeuralNetwork(float stepLearningParam, int nbLayers)
@@ -84,8 +129,37 @@ int AddAllNeuron(std::vector<int> neuronePerLayers)
 	}
 }
 
-int InitNeuralNetwork()
+int InitNeuralNetwork(float initWeight, int* weightsPerLayerArray, int nbLayer, int activateFunc, float biasValue)
 {
+	int res = 0;
+
+	std::vector<int> weightsPerLayer;
+	for (int i = 0; i < nbLayer; ++i)
+	{
+		weightsPerLayer.push_back(weightsPerLayerArray[i]);
+	}
+
+	ConstructorNeuralNetwork(0.05f, weightsPerLayer.size());
+	PrintValues();
+
+	res = AddAllNeuron(weightsPerLayer);
+	if (res == -1)
+	{
+		std::cout << "ERROR AddAllNeuron" << std::endl;
+	}
+
+	switch(activateFunc)
+	{
+	case 0:
+		ActivateFunc = &Sigmoide;
+		break;
+	case 1:
+		ActivateFunc = &TanH;
+		break;
+	default:
+		ActivateFunc = &Sigmoide;
+	}
+
 	for (int i = 0; i < layers.size(); ++i)
 	{
 		if (layers[i].size() <= 0)
@@ -196,7 +270,7 @@ int Propagation(std::vector<float> inputLayer)
 					}
 
 					// Apply Sigmoid function to the weighted sum (somme ponderee = weighted sum ??)
-					values[i][j] = Sigmoide(value);
+					values[i][j] = ActivateFunc(value);
 				}
 			}
 
@@ -239,7 +313,7 @@ int Retropropagation(std::vector<float> outputLayer)
 							sum += values[i - 1][l] * weights[i - 1][l][k];
 						}
 
-						sum = Sigmoide(sum);
+						sum = ActivateFunc(sum);
 
 						weights[i - 1][j][k] -= error * (-1 * values[i][k] * sum * (1 - sum) * values[i - 1][j]);
 					}
@@ -300,116 +374,74 @@ int Learn(std::vector<float> inputLayer, std::vector<float> outputLayer)
 	}
 }
 
-void PrintValues()
+float* LearnMLP(int nbSample, float* inputs, const int nbInputParam, float* output, const int nbOutputParam, int nbIteration)
 {
-	for (int i = 0, indexLayer = 1; i < values.size(); ++i, ++indexLayer)
+	int it = 0;
+	while (it < nbIteration)
 	{
-		std::cout << "Layer " << indexLayer << " :" << std::endl;
-		for (int j = 0; j < values[i].size(); ++j)
+		for (int i = 0; i < nbSample; ++i)
 		{
-			std::cout << "\tNeuron " << j << " value : " << values[i][j] << std::endl;
-		}
-		std::cout << std::endl;
-	}
-}
-
-void PrintWeights()
-{
-	for (int i = 0, indexLayer = 1; i < weights.size(); ++i, ++indexLayer)
-	{
-		std::cout << "Layer " << indexLayer << " :" << std::endl;
-		for (int j = 0; j < weights[i].size(); ++j)
-		{
-			std::cout << "\tNeuron " << j << " :" << std::endl;
-			for (int k = 0; k < weights[i][j].size(); ++k)
+			std::vector<float> inputLayer;
+			for (int j = 0; j < nbInputParam; ++j)
 			{
-				std::cout << "\t\tWeight " << k << " :" << weights[i][j][k] << std::endl;
+				inputLayer.push_back(inputs[i + j]);
+			}
+
+			std::vector<float> outputLayer;
+			for (int j = 0; j < nbOutputParam; ++j)
+			{
+				outputLayer.push_back(output[i + j]);
+			}
+
+			Learn(inputLayer, outputLayer);
+		}
+		
+		++it;
+	}
+
+	std::vector<float> resultWeights;
+
+	for (int i = 0; i < weights.size(); ++i)
+	{
+		for (int j = 0; j < weights[i].size(); j++)
+		{
+			for (int k = 0; k < weights[i][j].size(); k++)
+			{
+				resultWeights.push_back(weights[i][j][k]);
 			}
 		}
-		std::cout << std::endl;
 	}
+
+	return resultWeights.data();
 }
-
-void PrintAll()
-{
-	std::cout << "All values :" << std::endl;
-	PrintValues();
-
-	std::cout << std::endl;
-
-	std::cout << "All weight :" << std::endl;
-	PrintWeights();
-}
-
 
 int main()
 {
+	// float init weight
+	// int nb layers
+	// int array nb layer with nb neuron per layer
 	int res = 0;
-	ConstructorNeuralNetwork(0.05f, 4);
 
-	PrintValues();
+	int nbNeuronPerLayerArray[] = {3, 5, 7, 1};
 
-	std::vector<int> nbNeuronPerLayer;
-	nbNeuronPerLayer.push_back(3);
-	nbNeuronPerLayer.push_back(5);
-	nbNeuronPerLayer.push_back(7);
-	nbNeuronPerLayer.push_back(1);
-
-	res = AddAllNeuron(nbNeuronPerLayer);
-	if (res == -1)
-	{
-		std::cout << "ERROR AddAllNeuron" << std::endl;
-	}
-
-	res = InitNeuralNetwork();
+	res = InitNeuralNetwork(0.5f, nbNeuronPerLayerArray, 4, 0, 1.f);
 	if (res == -1)
 	{
 		std::cout << "ERROR InitNeuralNetwork" << std::endl;
 	}
 
 	PrintAll();
+	float inputs[] = {1, 0,
+		1, 0,
+		0, 0,
+		1, 1};
 
-	// 1
-	std::vector<float> v1;
-	v1.push_back(1);
-	v1.push_back(0);
-	std::vector<float> v2;
-	v2.push_back(1);
+	float outputs[] = { 1,
+						0,
+						1,
+						1 };
 
-	Learn(v1, v2);
-	v1.clear();
-	v2.clear();
-
-	// 2
-	v1.push_back(1);
-	v1.push_back(0);
-
-	v2.push_back(0);
-
-	Learn(v1, v2);
-	v1.clear();
-	v2.clear();
-
-	// 3
-	v1.push_back(0);
-	v1.push_back(0);
-
-	v2.push_back(1);
-
-	Learn(v1, v2);
-	v1.clear();
-	v2.clear();
-
-	// 4
-	v1.push_back(1);
-	v1.push_back(1);
-
-	v2.push_back(1);
-
-	Learn(v1, v2);
-	v1.clear();
-	v2.clear();
-
+	float* allWeights = LearnMLP(4, inputs, 2, outputs, 1, 10);
 	PrintAll();
 
 	return 0;
