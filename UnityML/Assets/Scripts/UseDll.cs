@@ -98,7 +98,16 @@ public class UseDll : MonoBehaviour
     private int[] nbNeuronPerLayerMLP;
 
     [SerializeField]
-    int verboseModeMLP = 0;
+    private int verboseModeMLP = 0;
+
+    [SerializeField]
+    private int nbClasses = 3;
+
+    [SerializeField]
+    private GameObject goToTest;
+
+    [SerializeField]
+    private Material matGoToTest;
 
     // Training RBF
     [SerializeField]
@@ -181,6 +190,9 @@ public class UseDll : MonoBehaviour
 
     private IntPtr bufferWeightRBFClass;
     private IntPtr bufferWeightRBFRegr;
+
+    private bool alreadyTestedMLP;
+    private float[] resultWeightMLP;
     #endregion
 
 
@@ -286,21 +298,21 @@ public class UseDll : MonoBehaviour
             Marshal.Copy(zBuffer, 0, bufferZBuffer, zBuffer.Length);
 
             IntPtr result = GetLinearRegressionWithEigen(bufferInputs, bufferZBuffer, this.nbParameterRegressionPI + 1, this.cubeRegressionPI.Length);
-            float[] resultRegressionPI = new float[nbParameterRegressionPI+1];
-            Marshal.Copy(result, resultRegressionPI, 0, nbParameterRegressionPI+1);
+            float[] resultRegressionPI = new float[nbParameterRegressionPI + 1];
+            Marshal.Copy(result, resultRegressionPI, 0, nbParameterRegressionPI + 1);
 
             float w0 = resultRegressionPI[0];
             float w1 = resultRegressionPI[1];
             float w2 = resultRegressionPI[2];
 
-            for(int i = 0; i < cubeRegressionPI.Length; ++i)
+            for (int i = 0; i < cubeRegressionPI.Length; ++i)
             {
                 float z = w0 * 1 + w1 * cubeRegressionPI[i].transform.position.x + w2 * cubeRegressionPI[i].transform.position.y;
                 cubeRegressionPI[i].transform.position = new Vector3(cubeRegressionPI[i].transform.position.x, cubeRegressionPI[i].transform.position.y, z);
             }
         }
         // Init Classifier PLA
-        else if(cubeClassifierPLA.Length > 0)
+        else if (cubeClassifierPLA.Length > 0)
         {
             int nbSample = cubeClassifierPLA.Length; // count sample
             /*
@@ -342,7 +354,7 @@ public class UseDll : MonoBehaviour
             this.weightBiasPLA = resultLinearClassifier[2];
         }
         // Init Classifier RBF
-        else if(this.cubeClassifierRBF.Length > 0)
+        else if (this.cubeClassifierRBF.Length > 0)
         {
             int nbSample = cubeClassifierRBF.Length;
             float[] inputs = new float[nbSample * nbParameterClassifierRBF];
@@ -362,7 +374,7 @@ public class UseDll : MonoBehaviour
             Marshal.Copy(inputs, 0, bufferInputs, inputs.Length);
             Marshal.Copy(expected, 0, bufferExpected, expected.Length);
 
-            if(this.TrainRBFClassifer || this.bufferWeightRBFClass == null)
+            if (this.TrainRBFClassifer || this.bufferWeightRBFClass == null)
             {
                 IntPtr result = RunRBFNaiveTraining(gammaClassifierRBF, bufferInputs, bufferExpected, this.nbParameterClassifierRBF, nbSample, this.nbOutputClassificationRBF);
                 float[] resultLinearClassifierTraining = new float[this.nbParameterClassifierRBF];
@@ -371,7 +383,7 @@ public class UseDll : MonoBehaviour
                 float[] weights = new float[nbParameterClassifierRBF];
                 Marshal.Copy(weights, 0, bufferWeightRBFClass, weights.Length);
             }
-            
+
             float[] newPoint = new float[2];
             newPoint[0] = this.newPointRBFClassification.transform.position.x;
             newPoint[1] = this.newPointRBFClassification.transform.position.y;
@@ -379,12 +391,12 @@ public class UseDll : MonoBehaviour
             IntPtr bufferNewPoint = Marshal.AllocCoTaskMem(Marshal.SizeOf(newPoint.Length) * newPoint.Length);
             Marshal.Copy(newPoint, 0, bufferNewPoint, newPoint.Length);
 
-            IntPtr resultClass = RunRBFClassification(gammaClassifierRBF, bufferInputs,bufferNewPoint, bufferWeightRBFClass, nbParameterClassifierRBF, nbSample, nbOutputClassificationRBF);
+            IntPtr resultClass = RunRBFClassification(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFClass, nbParameterClassifierRBF, nbSample, nbOutputClassificationRBF);
             float[] resultClassif = new float[nbOutputClassificationRBF];
             Marshal.Copy(resultClass, resultClassif, 0, nbOutputClassificationRBF);
         }
         // Init Regression RBF
-        else if(this.cubeRegressionRBF.Length > 0)
+        else if (this.cubeRegressionRBF.Length > 0)
         {
             int nbSample = cubeRegressionRBF.Length;
             float[] inputs = new float[nbSample * nbParameterRegressionRBF];
@@ -430,16 +442,32 @@ public class UseDll : MonoBehaviour
         {
             int nbSample = this.cubeMLP.Length;
             float[] inputs = new float[nbSample * nbInputParameterMLP];
-            float[] outputs = new float[nbSample];
+            float[] outputs = new float[nbSample * nbClasses];
 
-            for (int i = 0, j = 0; i < nbSample; ++i, j += 2)
+            for (int i = 0, j = 0, k = 0; i < nbSample; ++i, j += nbInputParameterMLP, k += nbClasses)
             {
                 inputs[j] = cubeMLP[i].transform.position.x;
                 inputs[j + 1] = cubeMLP[i].transform.position.y;
 
-                outputs[i] = (float)Convert.ToDouble(cubeMLP[i].tag);
+                if (cubeMLP[i].tag == "red")
+                {
+                    outputs[k] = 1.0f;
+                    outputs[k + 1] = 0.0f;
+                    outputs[k + 2] = 0.0f;
+                }
+                else if (cubeMLP[i].tag == "green")
+                {
+                    outputs[k] = 0.0f;
+                    outputs[k + 1] = 1.0f;
+                    outputs[k + 2] = 0.0f;
+                }
+                else if (cubeMLP[i].tag == "blue")
+                {
+                    outputs[k] = 0.0f;
+                    outputs[k + 1] = 0.0f;
+                    outputs[k + 2] = 1.0f;
+                }
             }
-
 
             IntPtr bufferNeuronsPerLayer = Marshal.AllocCoTaskMem(Marshal.SizeOf(nbNeuronPerLayerMLP.Length) * nbNeuronPerLayerMLP.Length);
             IntPtr bufferInputs = Marshal.AllocCoTaskMem(Marshal.SizeOf(inputs.Length) * inputs.Length);
@@ -452,11 +480,21 @@ public class UseDll : MonoBehaviour
             // InitNeuralNetwork(initWeightMLP, bufferNeuronsPerLayer, nbNeuronPerLayerMLP.Length, activateFuncMLP, biasValueMLP, verboseModeMLP);
             IntPtr resultWeights = LearnMLP(nbSample, bufferInputs, nbInputParameterMLP, bufferOutput, nbOutputParameterMLP, nbIterationMLP, initWeightMLP, errorMLP, bufferNeuronsPerLayer, nbNeuronPerLayerMLP.Length,
                 activateFuncMLP, biasValueMLP, verboseModeMLP);
-            float[] resultMLP = new float[nbSample * nbOutputParameterMLP]; // +1 for bias
-            Marshal.Copy(resultWeights, resultMLP, 0, nbSample * nbOutputParameterMLP);
 
+            int nbWeightResult = 0;
+            for (int i = 0; i < nbNeuronPerLayerMLP.Length; ++i)
+            {
+                if (i != nbNeuronPerLayerMLP.Length - 1)
+                {
+                    nbWeightResult += (nbNeuronPerLayerMLP[i] * nbNeuronPerLayerMLP[i + 1]);
+                }
+            }
 
+            //float[] resultMLP = new float[nbSample * nbOutputParameterMLP]; // +1 for bias
+            //Marshal.Copy(resultWeights, resultMLP, 0, nbSample * nbOutputParameterMLP);
 
+            resultWeightMLP = new float[nbWeightResult]; // +1 for bias
+            Marshal.Copy(resultWeights, resultWeightMLP, 0, nbWeightResult);
         }
     }
 
@@ -497,6 +535,43 @@ public class UseDll : MonoBehaviour
             Vector3 p2 = new Vector3(10, y2);
 
             Debug.DrawLine(p1, p2, Color.green);
+        }
+        else if (!alreadyTestedMLP && goToTest != null)
+        {
+            float[] inputToTest = new float[nbInputParameterMLP];
+            //IntPtr superResult = SuperFonctionPropa(input);
+            //Marshal.Copy(superResult, inputToTest, 0, nbClasses);
+
+            float max = 0.0f;
+            int indiceMax = 0;
+
+            for (int i = 0; i < inputToTest.Length; ++i)
+            {
+                if (max < inputToTest[i])
+                {
+                    max = inputToTest[i];
+                    indiceMax = i;
+                }
+            }
+
+
+            switch (indiceMax)
+            {
+                case 0:
+                    matGoToTest.color = Color.red;
+                    break;
+                case 1:
+                    matGoToTest.color = Color.green;
+                    break;
+                case 2:
+                    matGoToTest.color = Color.blue;
+                    break;
+                default:
+                    matGoToTest.color = Color.white;
+                    break;
+            }
+
+            alreadyTestedMLP = true;
         }
     }
 }
