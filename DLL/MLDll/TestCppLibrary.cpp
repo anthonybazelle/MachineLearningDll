@@ -1433,4 +1433,95 @@ extern "C" {
 
 		return resultWeights.data();
 	}
+
+	float* PredictMLP(float* inputs, float* W, int nbInputParam, int* neuronsPerLayerArray, int nbLayer, int activateFunc)
+	{
+		std::vector<std::vector<float>> values;
+		std::vector<std::vector<int>> layers;
+		std::vector<std::vector<std::vector<float>>> weights;
+		bool executed;
+		std::ofstream logFile;
+
+		InitNeuralNetwork(0, 0, neuronsPerLayerArray, nbLayer, 0, 1, values, layers, weights, executed, logFile);
+
+		std::vector<float> w1;
+		std::vector<std::vector<float>> w2;
+		std::vector<std::vector<std::vector<float>>> weights2;
+		int idx = 0;
+		for (int i = 0; i < nbLayer - 1; ++i)
+		{
+			w2.clear();
+			for (int j = 0; j < neuronsPerLayerArray[i]; ++j)
+			{
+				w1.clear();
+				for (int k = 0; k < neuronsPerLayerArray[i + 1]; ++k)
+				{
+					if (i != nbLayer - 2 && k == neuronsPerLayerArray[i + 1] - 1)
+						continue;
+					w1.push_back(W[idx++]);
+				}
+				w2.push_back(w1);
+			}
+			weights2.push_back(w2);
+		}
+		weights = weights2;
+		
+		float(*ActivateFunc)(float);
+		switch (activateFunc)
+		{
+		case 0:
+			ActivateFunc = &Sigmoide;
+			break;
+		case 1:
+			ActivateFunc = &TanH;
+			break;
+		default:
+			ActivateFunc = &Sigmoide;
+		}
+
+		// Check if the layer pass in parameter has the same number of neuron
+		if (nbInputParam == layers[0].size() - 1)
+		{
+			// Initialize the neuron's values of the first layer with values pass in parameter
+			for (int i = 0; i < nbInputParam; ++i)
+			{
+				values[0][i] = inputs[i];
+			}
+
+			// Loop on each layers, we start at hidden layer 1 because we already initialize the first layer
+			for (int i = 1; i < values.size(); ++i)
+			{
+				// Loop on each neurons value
+				for (int j = 0; j < values[i].size(); ++j)
+				{
+					if (values.size() - 1 != i && values[i].size() - 1 == j)
+					{
+						continue;
+					}
+
+					float value = 0.f;
+
+					// Loop on previous layer because we need the value of each neuron of the previous layer to calculate each neuron of the actual layer
+					for (int k = 0; k < values[i - 1].size(); ++k)
+					{
+						value += values[i - 1][k] * weights[i - 1][k][j];
+					}
+
+					// Apply Sigmoid function to the weighted sum (somme ponderee = weighted sum ??)
+					values[i][j] = ActivateFunc(value);
+				}
+			}
+
+			//if (verboseMode == 1)
+			//	PrintAll(logFile, "PROPAGATION DONE");
+			//	logFile.close();
+			return values[values.size() - 1].data();
+		}
+		else
+		{
+			std::cout << " PROPAGATION : Network architecture doesn't correspond with parameters." << std::endl;
+			return nullptr;
+		}
+	}
+
 }
