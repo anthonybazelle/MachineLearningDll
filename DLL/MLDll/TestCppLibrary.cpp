@@ -673,7 +673,7 @@ extern "C" {
 		Eigen::MatrixXf phi(nbSamples, cluster);				//matrice Phi intermédiaire au calcul de W
 		Eigen::MatrixXf outputs(nbSamples, nbOutputs);			//matrice des sorties attendues du training
 		Eigen::MatrixXf samples(nbSamples, nbParameters);		//matrice des exemples de training
-		Eigen::MatrixXf µ(cluster, nbParameters);				//
+		Eigen::MatrixXf µ(cluster, nbParameters);				//moyenne des exemples dans un cluster
 		Eigen::MatrixXf clust(nbSamples, 2);					//numéro du cluster d'appartenance de chaque exemple clust(i, 0) et distance à son représentant clust(i, 1)
 		Eigen::MatrixXf sampleCluster(cluster, 1);				//population de chaque cluster
 		Eigen::MatrixXf barycentres(cluster, nbParameters);		//barycentre de chaque cluster
@@ -810,7 +810,19 @@ extern "C" {
 
 		Eigen::MatrixXf weights = (phi.transpose() * phi).inverse() * phi.transpose() * outputs;		//Calcul final de W = (tPhi * Phi)-1 * tPhi * Y
 
-		return weights.data();
+		Eigen::MatrixXf rpzVector(cluster * nbParameters, 1);
+
+		for (int i = 0; i < nbParameters; ++i)
+		{
+			for (int j = 0; j < cluster; ++j)
+			{
+				rpzVector(i * cluster + j, 0) = rpz(j, i);
+			}
+		}
+
+		Eigen::MatrixXf result(weights.rows() + rpzVector.rows(), weights.cols());
+
+		return result.data();
 	}
 
 	float* MLPerceptronRegression(float* inputs, float* expected, float* weights, int* layersNeurones, int nbParameters, int nbSample, int nbLayers, float stepLearning, int nbIteration, float tolerance)
