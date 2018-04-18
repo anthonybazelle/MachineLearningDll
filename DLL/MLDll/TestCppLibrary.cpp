@@ -174,7 +174,7 @@ extern "C" {
 
 			nativeInputs.push_back(sample);
 		}
-		
+
 		//logFile << "Initialize sample : DONE - NbSample : " << nbSample <<  std::endl << std::endl;
 
 		float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2));
@@ -205,7 +205,7 @@ extern "C" {
 				}
 				result -= w0;
 
-				if(result < 0)
+				if (result < 0)
 				{
 					y = -1.f;
 				}
@@ -215,7 +215,7 @@ extern "C" {
 				}
 
 				//logFile << "Result for sample " << i << " : " << y << "  Expected : " << expected[i] << std::endl;
-				
+
 				if (std::abs(y - nativeInputs[i]->getExpected()) > tolerance)
 				{
 					needToContinue = true;
@@ -251,14 +251,14 @@ extern "C" {
 		//}
 
 		float* resultWeight = new float[nbParameters + 1];
-		
-		for(int i = 0; i < nbParameters; ++i)
+
+		for (int i = 0; i < nbParameters; ++i)
 		{
 			resultWeight[i] = weights[i];
 		}
 
 		// Release memory
-		for(int i = 0; i < nativeInputs.size(); ++i)
+		for (int i = 0; i < nativeInputs.size(); ++i)
 		{
 			Sample* s = nativeInputs[i];
 			nativeInputs.erase(nativeInputs.begin() + i);
@@ -296,7 +296,7 @@ extern "C" {
 
 			nativeInputs.push_back(sample);
 		}
-		
+
 		//logFile << "Initialize sample : DONE - NbSample : " << nbSample <<  std::endl << std::endl;
 
 		float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2));
@@ -327,7 +327,7 @@ extern "C" {
 				}
 				result -= w0;
 
-				if(result < 0)
+				if (result < 0)
 				{
 					y = -1.f;
 				}
@@ -337,7 +337,7 @@ extern "C" {
 				}
 
 				//logFile << "Result for sample " << i << " : " << y << "  Expected : " << expected[i] << std::endl;
-				
+
 				if (std::abs(y - nativeInputs[i]->getExpected()) > tolerance)
 				{
 					needToContinue = true;
@@ -374,14 +374,14 @@ extern "C" {
 		}*/
 
 		float* resultWeight = new float[nbParameters + 1];
-		
-		for(int i = 0; i < nbParameters; ++i)
+
+		for (int i = 0; i < nbParameters; ++i)
 		{
 			resultWeight[i] = weights[i];
 		}
 
 		// Release memory
-		for(int i = 0; i < nativeInputs.size(); ++i)
+		for (int i = 0; i < nativeInputs.size(); ++i)
 		{
 			Sample* s = nativeInputs[i];
 			nativeInputs.erase(nativeInputs.begin() + i);
@@ -431,7 +431,7 @@ extern "C" {
 		Eigen::MatrixXf y(nbSample, 1);
 
 		float w0 = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1 - (-1))));
-				
+
 		int iteration = 0;
 		bool needToContinue;
 		float result;
@@ -677,7 +677,7 @@ extern "C" {
 		Eigen::MatrixXf clust(nbSamples, 2);					//numéro du cluster d'appartenance de chaque exemple clust(i, 0) et distance à son représentant clust(i, 1)
 		Eigen::MatrixXf sampleCluster(cluster, 1);				//population de chaque cluster
 		Eigen::MatrixXf barycentres(cluster, nbParameters);		//barycentre de chaque cluster
-	
+
 		float dist;												//distance euclidienne d'un exemple au représentant d'un cluster (locale)
 		bool converge = false;									//condition de convergence du modèle satisfaite ? (globale)
 		bool emptyCluster = false;								//un des clusters vide ? (locale)
@@ -690,7 +690,7 @@ extern "C" {
 
 		while (!converge)
 		{
-			for (int i = 0; i < cluster; ++i)									
+			for (int i = 0; i < cluster; ++i)
 			{
 				sampleCluster(i, 0) = 0;							//réinitialisation de la population de chaque cluster
 			}
@@ -703,7 +703,7 @@ extern "C" {
 					dist = 0.f;
 					for (int k = 0; k < nbParameters; ++k)				//calcul de la distance euclidienne de l'exemple avec le représentant du cluster parcouru
 					{
-						dist += pow(samples(i, k) - rpz(j, k), 2);		
+						dist += pow(samples(i, k) - rpz(j, k), 2);
 					}
 
 					if (dist < clust(i, 1))								//si plus proche qu'avant : 
@@ -723,7 +723,7 @@ extern "C" {
 					Eigen::MatrixXf tmpRpz = initializeClusterRepresentative(samples, 1, nbParameters, nbSamples);		//calcul d'un nouveau représentant 
 					for (int j = 0; j < nbParameters; ++j)																//attribution du nouveau représentant
 					{
-						rpz(i, j) = tmpRpz(1, j);			
+						rpz(i, j) = tmpRpz(1, j);
 					}
 					emptyCluster = true;
 				}
@@ -1264,27 +1264,29 @@ extern "C" {
 		}
 	}
 
-	float* LearnMLP(int nbSample, float* inputs, const int nbInputParam, float* output, const int nbOutputParam, int nbIteration)
+	float* LearnMLP(int nbSample, float* inputs, const int nbInputParam, float* outputs, const int nbOutputParam, int nbIteration)
 	{
 		int it = 0;
+		int min = 0;
+		int max = nbSample - 1;
 		while (it < nbIteration)
 		{
-			for (int i = 0; i < nbSample; ++i)
+			int i = min + (rand() % static_cast<int>(max - min + 1));
+
+			std::vector<float> inputLayer;
+			for (int j = 0; j < nbInputParam; ++j)
 			{
-				std::vector<float> inputLayer;
-				for (int j = 0; j < nbInputParam; ++j)
-				{
-					inputLayer.push_back(inputs[i + j]);
-				}
-
-				std::vector<float> outputLayer;
-				for (int j = 0; j < nbOutputParam; ++j)
-				{
-					outputLayer.push_back(output[i + j]);
-				}
-
-				Learn(inputLayer, outputLayer);
+				inputLayer.push_back(inputs[i + j]);
 			}
+
+			std::vector<float> outputLayer;
+			for (int j = 0; j < nbOutputParam; ++j)
+			{
+				outputLayer.push_back(outputs[i + j]);
+			}
+
+			Learn(inputLayer, outputLayer);
+
 
 			++it;
 		}
@@ -1304,5 +1306,4 @@ extern "C" {
 
 		return resultWeights.data();
 	}
-
 }
