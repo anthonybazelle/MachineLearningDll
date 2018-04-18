@@ -668,7 +668,7 @@ extern "C" {
 		return result.data();
 	}
 
-	float* RBFkMeansTraining(float epsilon, int cluster, float gamma, float* inputs, float* expected, int nbParameters, int nbSamples, int nbOutputs)
+	float* RBFkMeansTraining(float epsilon, int cluster, float gamma, float* inputs, float* expected, int nbParameters, int nbSamples, int nbOutputs, int nbIterations)
 	{
 		Eigen::MatrixXf phi(nbSamples, cluster);				//matrice Phi intermédiaire au calcul de W
 		Eigen::MatrixXf outputs(nbSamples, nbOutputs);			//matrice des sorties attendues du training
@@ -678,9 +678,11 @@ extern "C" {
 		Eigen::MatrixXf sampleCluster(cluster, 1);				//population de chaque cluster
 		Eigen::MatrixXf barycentres(cluster, nbParameters);		//barycentre de chaque cluster
 
+		int it = 0;
 		float dist;												//distance euclidienne d'un exemple au représentant d'un cluster (locale)
 		bool converge = false;									//condition de convergence du modèle satisfaite ? (globale)
 		bool emptyCluster = false;								//un des clusters vide ? (locale)
+		bool sampleClustered = false;
 
 		samples = pointerToMatrix(inputs, nbSamples, nbParameters);
 		outputs = pointerToMatrix(expected, nbSamples, nbOutputs);
@@ -688,8 +690,10 @@ extern "C" {
 		//initialisation des représentants des clusters
 		Eigen::MatrixXf rpz = initializeClusterRepresentative(samples, cluster, nbParameters, nbSamples);
 
-		while (!converge)
+		while (!converge && it < nbIterations)
 		{
+			++it;
+
 			for (int i = 0; i < cluster; ++i)
 			{
 				sampleCluster(i, 0) = 0;							//réinitialisation de la population de chaque cluster
@@ -697,6 +701,7 @@ extern "C" {
 
 			for (int i = 0; i < nbSamples; ++i)						//répartition de tous les exemples dans les clusters
 			{
+				sampleClustered = false;
 				clust(i, 1) = FLT_MAX;
 				for (int j = 0; j < cluster; ++j)
 				{
@@ -708,7 +713,11 @@ extern "C" {
 
 					if (dist < clust(i, 1))								//si plus proche qu'avant : 
 					{
-						sampleCluster(clust(i, 0), 0)--;					//décrémentation de la population de l'ancien cluster
+						if (sampleClustered)								//décrémentation de la population de l'ancien cluster
+						{
+							sampleCluster(clust(i, 0), 0)--;				
+						}
+						sampleClustered = true;
 						sampleCluster(j, 0)++;								//incrémentation de la population du nouveau cluster
 						clust(i, 0) = j;									//attribution du nouveau cluster
 						clust(i, 1) = dist;									//attribution de la nouvelle distance
@@ -760,14 +769,14 @@ extern "C" {
 				}
 				dist = sqrt(dist);
 
-				for (int j = 0; j < nbParameters; ++j)					//remplacement du représentant par le barycentre
-				{
-					rpz(i, j) = barycentres(i, j);
-				}
-
 				if (dist > epsilon)										//si la distance est supérieure à l'objectif de convergence => on ne sort pas du while 
 				{
 					converge = false;
+				}
+
+				for (int j = 0; j < nbParameters; ++j)					//remplacement du représentant par le barycentre
+				{
+					rpz(i, j) = barycentres(i, j);
 				}
 			}
 		}
