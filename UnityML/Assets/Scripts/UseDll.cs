@@ -31,6 +31,9 @@ public class UseDll : MonoBehaviour
 
     [DllImport("MLDll", EntryPoint = "RBFkMeansTraining")]
     public static extern IntPtr RunRBFkMeansTraining(float epsilon, int cluster, float gamma, IntPtr inputs, IntPtr expected, int nbParameters, int nbSamples, int nbOutputs);
+
+    [DllImport("MLDll", EntryPoint = "LearnMLP")]
+    public static extern IntPtr LearnMLP(int nbSample, IntPtr inputs, int nbInputParam, IntPtr outputs, int nbOutputParam, int nbIteration, float initWeight, float error, IntPtr neuronsPerLayer, int nbLayer, int activateFunc, float biasValue, int verboseMode = 0);
     #endregion
 
 
@@ -66,6 +69,36 @@ public class UseDll : MonoBehaviour
     [SerializeField]
     private float toleranceClassifierRosenblatt = 0.001f;
 
+    // Training MLP
+    [SerializeField]
+    private GameObject[] cubeMLP;
+
+    [SerializeField]
+    private int nbInputParameterMLP;
+
+    [SerializeField]
+    private int nbOutputParameterMLP;
+
+    [SerializeField]
+    private float errorMLP = 0.05f;
+
+    [SerializeField]
+    private int nbIterationMLP = 100;
+
+    [SerializeField]
+    private float initWeightMLP = 0.5f;
+
+    [SerializeField]
+    private float biasValueMLP = 1.0f;
+
+    [SerializeField]
+    private int activateFuncMLP = 0;
+
+    [SerializeField]
+    private int[] nbNeuronPerLayerMLP;
+
+    [SerializeField]
+    int verboseModeMLP = 0;
 
     // Training RBF
     [SerializeField]
@@ -391,6 +424,39 @@ public class UseDll : MonoBehaviour
             IntPtr resultRegr = RunRBFRegression(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFClass, nbParameterClassifierRBF, nbSample, nbOutputClassificationRBF);
             float[] resultRegress = new float[nbOutputRegressionRBF];
             Marshal.Copy(resultRegr, resultRegress, 0, nbOutputRegressionRBF);
+        }
+        // MLP
+        else if (this.cubeMLP.Length > 0)
+        {
+            int nbSample = this.cubeMLP.Length;
+            float[] inputs = new float[nbSample * nbInputParameterMLP];
+            float[] outputs = new float[nbSample];
+
+            for (int i = 0, j = 0; i < nbSample; ++i, j += 2)
+            {
+                inputs[j] = cubeMLP[i].transform.position.x;
+                inputs[j + 1] = cubeMLP[i].transform.position.y;
+
+                outputs[i] = (float)Convert.ToDouble(cubeMLP[i].tag);
+            }
+
+
+            IntPtr bufferNeuronsPerLayer = Marshal.AllocCoTaskMem(Marshal.SizeOf(nbNeuronPerLayerMLP.Length) * nbNeuronPerLayerMLP.Length);
+            IntPtr bufferInputs = Marshal.AllocCoTaskMem(Marshal.SizeOf(inputs.Length) * inputs.Length);
+            IntPtr bufferOutput = Marshal.AllocCoTaskMem(Marshal.SizeOf(outputs.Length) * outputs.Length);
+
+            Marshal.Copy(nbNeuronPerLayerMLP, 0, bufferNeuronsPerLayer, nbNeuronPerLayerMLP.Length);
+            Marshal.Copy(inputs, 0, bufferInputs, inputs.Length);
+            Marshal.Copy(outputs, 0, bufferOutput, outputs.Length);
+
+            // InitNeuralNetwork(initWeightMLP, bufferNeuronsPerLayer, nbNeuronPerLayerMLP.Length, activateFuncMLP, biasValueMLP, verboseModeMLP);
+            IntPtr resultWeights = LearnMLP(nbSample, bufferInputs, nbInputParameterMLP, bufferOutput, nbOutputParameterMLP, nbIterationMLP, initWeightMLP, errorMLP, bufferNeuronsPerLayer, nbNeuronPerLayerMLP.Length,
+                activateFuncMLP, biasValueMLP, verboseModeMLP);
+            float[] resultMLP = new float[nbSample * nbOutputParameterMLP]; // +1 for bias
+            Marshal.Copy(resultWeights, resultMLP, 0, nbSample * nbOutputParameterMLP);
+
+
+
         }
     }
 

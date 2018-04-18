@@ -9,12 +9,13 @@
 #include <vector>
 
 extern "C" {
-	std::vector<std::vector<int>> layers;
-	float error = 0.05f;
-	std::vector<std::vector<std::vector<float>>> weights; // Correspond to all weight of all neuron with the next layer, of all layer
-	std::vector<std::vector<float>> values;
-	bool executed;
-	float(*ActivateFunc)(float);
+	//std::vector<std::vector<int>> layers;
+	//float error = 0.05f;
+	//std::vector<std::vector<std::vector<float>>> weights; // Correspond to all weight of all neuron with the next layer, of all layer
+	//std::vector<std::vector<float>> values;
+	//bool executed;
+	//float(*ActivateFunc)(float);
+	//int verboseMode = 0;
 
     TESTFUNCDLL_API float TestMultiply(float a, float b);
     TESTFUNCDLL_API float TestDivide(float a, float b);
@@ -27,6 +28,5 @@ extern "C" {
 	TESTFUNCDLL_API float* RBFRegression(float gamma, float* inputs, float* data, float* weights, int nbParameters, int nbSamples, int nbOutputs);
 	TESTFUNCDLL_API float* RBFClassification(float gamma, float* inputs, float* data, float* weights, int nbParameters, int nbSamples, int nbOutputs);
 	TESTFUNCDLL_API float* RBFkMeansTraining(float epsilon, int cluster, float gamma, float* inputs, float* expected, int nbParameters, int nbSamples, int nbOutputs);
-	TESTFUNCDLL_API int InitNeuralNetwork(float initWeight, int* weightsPerLayerArray, int nbLayer, int activateFunc, float biasValue);
-	TESTFUNCDLL_API float* LearnMLP(int nbSample, float* inputs, const int nbInputParam, float* outputs, const int nbOutputParam, int nbIteration);
+	TESTFUNCDLL_API float* LearnMLP(int nbSample, float* inputs, const int nbInputParam, float* outputs, const int nbOutputParam, int nbIteration, float initWeight, float error, int* neuronsPerLayerArray, int nbLayer, int activateFunc, float biasValue, int verboseMode = 0);
 }

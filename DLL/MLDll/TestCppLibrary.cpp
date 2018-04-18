@@ -957,12 +957,56 @@ extern "C" {
 	/////// MLP ///////
 	///////////////////
 
-	// Constructor neural network
-	void ConstructorNeuralNetwork(float stepLearningParam, int nbLayers)
+	void PrintValues(std::ofstream& logFile, std::vector<std::vector<float>> values)
 	{
-		executed = false;
-		error = stepLearningParam;
+		for (int i = 0, indexLayer = 1; i < values.size(); ++i, ++indexLayer)
+		{
+			logFile << "Layer " << indexLayer << " :" << std::endl;
+			for (int j = 0; j < values[i].size(); ++j)
+			{
+				logFile << "\tNeuron " << j << " value : " << values[i][j] << std::endl;
+			}
+			logFile << std::endl;
+		}
+	}
 
+	void PrintWeights(std::ofstream& logFile, std::vector<std::vector<std::vector<float>>> weights)
+	{
+		for (int i = 0, indexLayer = 1; i < weights.size(); ++i, ++indexLayer)
+		{
+			logFile << "Layer " << indexLayer << " :" << std::endl;
+			for (int j = 0; j < weights[i].size(); ++j)
+			{
+				logFile << "\tNeuron " << j << " :" << std::endl;
+				for (int k = 0; k < weights[i][j].size(); ++k)
+				{
+					logFile << "\t\tWeight " << k << " :" << weights[i][j][k] << std::endl;
+				}
+			}
+			logFile << std::endl;
+		}
+	}
+
+	void PrintAll(std::ofstream& logFile, std::string statut, std::vector<std::vector<std::vector<float>>> weights, std::vector<std::vector<float>> values)
+	{
+		logFile << "//////////////////////////////////" << std::endl;
+		logFile << "////////// " << statut << " ////////" << std::endl;
+		logFile << "//////////////////////////////////" << std::endl << std::endl;
+
+		logFile << "All values :" << std::endl;
+		PrintValues(logFile, values);
+
+		logFile << std::endl;
+
+		logFile << "All weight :" << std::endl;
+
+		PrintWeights(logFile, weights);
+	}
+
+
+	// Constructor neural network
+	void ConstructorNeuralNetwork(int nbLayers, std::vector<std::vector<int>>& layers)
+	{
 		if (nbLayers > 1)
 		{
 			for (int i = 0; i < nbLayers; ++i)
@@ -983,7 +1027,7 @@ extern "C" {
 		return 1 / (1 + exp(-1 * value));
 	}
 
-	int AddNeuron(int indexCouche, int nbNeurone)
+	int AddNeuron(int indexCouche, int nbNeurone, std::vector<std::vector<int>>& layers, bool executed)
 	{
 		if (!executed)
 		{
@@ -1004,15 +1048,17 @@ extern "C" {
 		}
 	}
 
-	int AddAllNeuron(std::vector<int> neuronePerLayers)
+	int AddAllNeuron(std::vector<int> neuronePerLayers, std::vector<std::vector<int>>& layers, bool executed, std::ostream& logFile)
 	{
 		if (!executed)
 		{
+			logFile << "size neurPerLayer : " << neuronePerLayers.size() << std::endl << "size layers : " << layers.size();
 			if (neuronePerLayers.size() == layers.size())
 			{
 				for (int i = 0; i < neuronePerLayers.size(); ++i)
 				{
-					int result = AddNeuron(i, neuronePerLayers[i]); // +1 for bias to all hidden layers and input layer
+					logFile << "Add neuron" << neuronePerLayers[i] << " to layer : " << i << std::endl;
+					int result = AddNeuron(i, neuronePerLayers[i], layers, executed); // +1 for bias to all hidden layers and input layer
 
 					if (result == -1)
 					{
@@ -1024,43 +1070,47 @@ extern "C" {
 			}
 			else
 			{
-				std::cout << "ADDALLNEURON : Network architecture doesn't correspond with parameters." << std::endl;
+				logFile << "ADDALLNEURON : Network architecture doesn't correspond with parameters." << std::endl;
 				return -1;
 			}
 		}
 	}
 
-	int InitNeuralNetwork(float initWeight, int* weightsPerLayerArray, int nbLayer, int activateFunc, float biasValue)
+	int InitNeuralNetwork(float initWeight, float error, int* neuronsPerLayerArray, int nbLayer, int activateFunc, float biasValue,	std::vector<std::vector<float>>& values, std::vector<std::vector<int>>& layers, std::vector<std::vector<std::vector<float>>>& weights, bool& executed, std::ofstream& logFile, int verboseMode = 0)
 	{
+		//std::ofstream logFile;
+		//logFile.open("logFileDll.log");
+		logFile << "HELLO MLP 1" << std::endl;
 		int res = 0;
-
-		std::vector<int> weightsPerLayer;
+		std::vector<int> neuronsPerLayer;
 		for (int i = 0; i < nbLayer; ++i)
 		{
-			weightsPerLayer.push_back(weightsPerLayerArray[i]);
+			neuronsPerLayer.push_back(neuronsPerLayerArray[i]);
 		}
 
-		ConstructorNeuralNetwork(0.05f, weightsPerLayer.size());
-		// A ajouter dans des LOG ?
-		//PrintValues();
+		logFile << "HELLO MLP 2" << std::endl;
 
-		res = AddAllNeuron(weightsPerLayer);
+		ConstructorNeuralNetwork(neuronsPerLayer.size(), layers);
+
+		logFile << "HELLO MLP 3" << std::endl;
+
+		res = AddAllNeuron(neuronsPerLayer, layers, executed, logFile);
 		if (res == -1)
 		{
-			std::cout << "ERROR AddAllNeuron" << std::endl;
+			logFile << "ERROR AddAllNeuron" << std::endl;
+			logFile.close();
+			return -1;
 		}
 
-		switch (activateFunc)
+		//if(verboseMode == 1)
+
+		logFile << "NB Layers : " << layers.size() << std::endl;
+		for (int i = 0; i < layers.size(); ++i)
 		{
-		case 0:
-			ActivateFunc = &Sigmoide;
-			break;
-		case 1:
-			ActivateFunc = &TanH;
-			break;
-		default:
-			ActivateFunc = &Sigmoide;
+			logFile << layers[i].size() << std::endl;
 		}
+		logFile.close();
+		//PrintAll(logFile, "STRUCTURE MLP DONE");
 
 		for (int i = 0; i < layers.size(); ++i)
 		{
@@ -1129,6 +1179,9 @@ extern "C" {
 				}
 			}
 
+			//if (verboseMode == 1)
+			//	PrintAll(logFile, "INITIALIZATION MLP DONE");
+			//	logFile.close();
 			return 0;
 		}
 		catch (std::exception &e)
@@ -1139,10 +1192,17 @@ extern "C" {
 	}
 
 	// Pass the value of each neuron of the first layer, and all values of each neuron of each layer will be calculated (here we use Sigmoide as activation function)
-	int Propagation(std::vector<float> inputLayer)
+	int Propagation(std::vector<float> inputLayer, std::vector<std::vector<float>>& values, std::vector<std::vector<int>>& layers, std::vector<std::vector<std::vector<float>>>& weights, bool& executed, float(*ActivateFunc)(float))
 	{
 		if (executed)
 		{
+			//if (verboseMode == 1)
+			//{
+			//	std::ofstream logFile;
+			//	logFile.open("logFileDll.log");
+			//	logFile << "PROPAGATION STARTED" << std::endl;
+			//}
+
 			// Check if the layer pass in parameter has the same number of neuron
 			if (inputLayer.size() == layers[0].size() - 1)
 			{
@@ -1176,6 +1236,9 @@ extern "C" {
 					}
 				}
 
+				//if (verboseMode == 1)
+				//	PrintAll(logFile, "PROPAGATION DONE");
+				//	logFile.close();
 				return 0;
 			}
 			else
@@ -1191,10 +1254,17 @@ extern "C" {
 		}
 	}
 
-	int Retropropagation(std::vector<float> outputLayer)
+	int Retropropagation(std::vector<float> outputLayer, std::vector<std::vector<float>>& values, std::vector<std::vector<std::vector<float>>>& weights, float error, float(*ActivateFunc)(float))
 	{
 		try
 		{
+			//if (verboseMode == 1)
+			//{
+			//	std::ofstream logFile;
+			//	logFile.open("logFileDll.log");
+			//	logFile << "RETROPROPAGATION STARTED" << std::endl;
+			//}
+
 			if (outputLayer.size() == values[values.size() - 1].size())
 			{
 				for (int i = 0; i < outputLayer.size(); ++i)
@@ -1235,6 +1305,9 @@ extern "C" {
 					}
 				}
 
+				//if (verboseMode == 1)
+				//	PrintAll("RETROPROPAGATION DONE");
+
 				return 0;
 			}
 			else
@@ -1250,16 +1323,15 @@ extern "C" {
 		}
 	}
 
-
-
-	int Learn(std::vector<float> inputLayer, std::vector<float> outputLayer)
+	int Learn(std::vector<std::vector<int>> layers, std::vector<float> inputLayer, std::vector<float> outputLayer, bool& executed,
+		std::vector<std::vector<float>>& values, std::vector<std::vector<std::vector<float>>>& weights, float error, float(*ActivateFunc)(float))
 	{
 		if (executed)
 		{
 			if (inputLayer.size() == layers[0].size() - 1 && outputLayer.size() == layers[layers.size() - 1].size())
 			{
-				Propagation(inputLayer);
-				Retropropagation(outputLayer);
+				Propagation(inputLayer, values, layers, weights, executed, ActivateFunc);
+				Retropropagation(outputLayer, values, weights, error, ActivateFunc);
 
 				return 0;
 			}
@@ -1276,8 +1348,42 @@ extern "C" {
 		}
 	}
 
-	float* LearnMLP(int nbSample, float* inputs, const int nbInputParam, float* outputs, const int nbOutputParam, int nbIteration)
+	float* LearnMLP(int nbSample, float* inputs, const int nbInputParam, float* outputs, const int nbOutputParam, int nbIteration, float initWeight, float error, int* neuronsPerLayerArray,
+		int nbLayer, int activateFunc, float biasValue, int verboseMode)
 	{
+		std::vector<std::vector<int>> layers;
+		std::vector<std::vector<std::vector<float>>> weights; // Correspond to all weight of all neuron with the next layer, of all layer
+		std::vector<std::vector<float>> values;
+		bool executed = false;
+		float(*ActivateFunc)(float);
+
+		std::ofstream logFile;
+		logFile.open("logFileDll.log");
+
+		for (int i = 0; i < nbLayer; ++i)
+		{
+			logFile << "Neuros for layers " << i << " : " << neuronsPerLayerArray[i] << std::endl;
+		}
+
+		int resInit = InitNeuralNetwork(initWeight, error, neuronsPerLayerArray, nbLayer, activateFunc, biasValue, values, layers, weights, executed, logFile, verboseMode);
+
+		if (resInit == -1)
+		{
+			std::cout << "ERROR INIT" << std::endl;
+		}
+
+		switch (activateFunc)
+		{
+		case 0:
+			ActivateFunc = &Sigmoide;
+			break;
+		case 1:
+			ActivateFunc = &TanH;
+			break;
+		default:
+			ActivateFunc = &Sigmoide;
+		}
+
 		int it = 0;
 		int min = 0;
 		int max = nbSample - 1;
@@ -1297,7 +1403,7 @@ extern "C" {
 				outputLayer.push_back(outputs[i + j]);
 			}
 
-			Learn(inputLayer, outputLayer);
+			Learn(layers, inputLayer, outputLayer, executed, values, weights, error, ActivateFunc);
 
 
 			++it;
