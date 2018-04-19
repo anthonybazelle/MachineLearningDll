@@ -1095,13 +1095,13 @@ extern "C" {
 		for (int i = 0; i < nbLayer; ++i)
 		{
 			neuronsPerLayer.push_back(neuronsPerLayerArray[i]);
+			logFile << "Nb neurons for layer " << i << " : " << neuronsPerLayerArray[i] << std::endl;
 		}
-
+		logFile << "Size neuronsPerLayer : " << neuronsPerLayer.size() << std::endl;
 		logFile << "HELLO MLP 2" << std::endl;
 
 		ConstructorNeuralNetwork(neuronsPerLayer.size(), layers);
-
-		logFile << "HELLO MLP 3" << std::endl;
+		logFile << "Size layers : " << layers.size() << std::endl;
 
 		res = AddAllNeuron(neuronsPerLayer, layers, executed, logFile);
 		if (res == -1)
@@ -1118,14 +1118,14 @@ extern "C" {
 		{
 			logFile << layers[i].size() << std::endl;
 		}
-		logFile.close();
+
 		//PrintAll(logFile, "STRUCTURE MLP DONE");
 
 		for (int i = 0; i < layers.size(); ++i)
 		{
 			if (layers[i].size() <= 0)
 			{
-				std::cout << "Layer requires at least one neuron. Layer " << i << std::endl;
+				logFile << "Layer requires at least one neuron. Layer " << i << std::endl;
 				return -1;
 			}
 		}
@@ -1195,7 +1195,8 @@ extern "C" {
 		}
 		catch (std::exception &e)
 		{
-			std::cout << "InitNeuralNetwork ERROR : " << e.what() << std::endl;
+			logFile << "InitNeuralNetwork ERROR : " << e.what() << std::endl;
+			logFile.close();
 			return -1;
 		}
 	}
@@ -1436,13 +1437,23 @@ extern "C" {
 
 	float* PredictMLP(float* inputs, float* W, int nbInputParam, int* neuronsPerLayerArray, int nbLayer, int activateFunc)
 	{
+		std::ofstream logFile;
+		logFile.open("logFileDll.log");
+		logFile << "Start Predict" << std::endl;
+
 		std::vector<std::vector<float>> values;
 		std::vector<std::vector<int>> layers;
 		std::vector<std::vector<std::vector<float>>> weights;
-		bool executed;
-		std::ofstream logFile;
+		bool executed = false;
 
-		InitNeuralNetwork(0, 0, neuronsPerLayerArray, nbLayer, 0, 1, values, layers, weights, executed, logFile);
+		int res = InitNeuralNetwork(0, 0, neuronsPerLayerArray, nbLayer, 0, 1, values, layers, weights, executed, logFile);
+		if (res == -1)
+		{
+			logFile << "Error InitNetwork" << std::endl;
+			return NULL;
+		}
+
+		logFile << "InitNeuralNetwork done" << std::endl;
 
 		std::vector<float> w1;
 		std::vector<std::vector<float>> w2;
@@ -1466,6 +1477,8 @@ extern "C" {
 		}
 		weights = weights2;
 		
+		logFile << "Weight redefined" << std::endl;
+
 		float(*ActivateFunc)(float);
 		switch (activateFunc)
 		{
@@ -1478,6 +1491,8 @@ extern "C" {
 		default:
 			ActivateFunc = &Sigmoide;
 		}
+
+		logFile << "Activation func selected" << std::endl;
 
 		// Check if the layer pass in parameter has the same number of neuron
 		if (nbInputParam == layers[0].size() - 1)
@@ -1515,11 +1530,17 @@ extern "C" {
 			//if (verboseMode == 1)
 			//	PrintAll(logFile, "PROPAGATION DONE");
 			//	logFile.close();
+
+
+			logFile << "Size return predict array : " << values[values.size() - 1].size() << std::endl;
+			logFile.close();
+
 			return values[values.size() - 1].data();
 		}
 		else
 		{
-			std::cout << " PROPAGATION : Network architecture doesn't correspond with parameters." << std::endl;
+			logFile << " PROPAGATION : Network architecture doesn't correspond with parameters." << std::endl;
+			logFile.close();
 			return nullptr;
 		}
 	}

@@ -34,6 +34,9 @@ public class UseDll : MonoBehaviour
 
     [DllImport("MLDll", EntryPoint = "LearnMLP")]
     public static extern IntPtr LearnMLP(int nbSample, IntPtr inputs, int nbInputParam, IntPtr outputs, int nbOutputParam, int nbIteration, float initWeight, float error, IntPtr neuronsPerLayer, int nbLayer, int activateFunc, float biasValue, int verboseMode = 0);
+
+    [DllImport("MLDll", EntryPoint = "PredictMLP")]
+    public static extern IntPtr PredictMLP(IntPtr inputs, IntPtr W, int nbInputParam, IntPtr neuronsPerLayerArray, int nbLayer, int activateFunc);
     #endregion
 
 
@@ -538,18 +541,31 @@ public class UseDll : MonoBehaviour
         }
         else if (!alreadyTestedMLP && goToTest != null)
         {
+            alreadyTestedMLP = true;
+            IntPtr bufferNeuronsPerLayer = Marshal.AllocCoTaskMem(Marshal.SizeOf(nbNeuronPerLayerMLP.Length) * nbNeuronPerLayerMLP.Length);
+            Marshal.Copy(nbNeuronPerLayerMLP, 0, bufferNeuronsPerLayer, nbNeuronPerLayerMLP.Length);
+
+            IntPtr bufferResultWeightMLP = Marshal.AllocCoTaskMem(Marshal.SizeOf(resultWeightMLP.Length) * resultWeightMLP.Length);
+            Marshal.Copy(resultWeightMLP, 0, bufferResultWeightMLP, resultWeightMLP.Length);
+
             float[] inputToTest = new float[nbInputParameterMLP];
-            //IntPtr superResult = SuperFonctionPropa(input);
+            IntPtr bufferInputToTestMLP = Marshal.AllocCoTaskMem(Marshal.SizeOf(inputToTest.Length) * inputToTest.Length);
+            Marshal.Copy(inputToTest, 0, bufferInputToTestMLP, inputToTest.Length);
+
+            IntPtr superResult = PredictMLP(bufferInputToTestMLP, bufferResultWeightMLP, nbInputParameterMLP, bufferNeuronsPerLayer, nbNeuronPerLayerMLP.Length, activateFuncMLP);
             //Marshal.Copy(superResult, inputToTest, 0, nbClasses);
+            float[] resultPredict = new float[nbClasses]; // +1 for bias
+            Marshal.Copy(superResult, resultPredict, 0, nbClasses);
+
 
             float max = 0.0f;
             int indiceMax = 0;
 
-            for (int i = 0; i < inputToTest.Length; ++i)
+            for (int i = 0; i < resultPredict.Length; ++i)
             {
-                if (max < inputToTest[i])
+                if (max < resultPredict[i])
                 {
-                    max = inputToTest[i];
+                    max = resultPredict[i];
                     indiceMax = i;
                 }
             }
@@ -570,8 +586,6 @@ public class UseDll : MonoBehaviour
                     matGoToTest.color = Color.white;
                     break;
             }
-
-            alreadyTestedMLP = true;
         }
     }
 }
