@@ -496,8 +496,10 @@ public class UseDll : MonoBehaviour
             //float[] resultMLP = new float[nbSample * nbOutputParameterMLP]; // +1 for bias
             //Marshal.Copy(resultWeights, resultMLP, 0, nbSample * nbOutputParameterMLP);
 
-            resultWeightMLP = new float[nbWeightResult]; // +1 for bias
-            Marshal.Copy(resultWeights, resultWeightMLP, 0, nbWeightResult);
+            float[] resultWeightMLPPPP = new float[63];
+            Marshal.Copy(resultWeights, resultWeightMLPPPP, 0, 63);
+
+            int u = 0;
         }
     }
 
@@ -569,7 +571,6 @@ public class UseDll : MonoBehaviour
                     indiceMax = i;
                 }
             }
-
 
             switch (indiceMax)
             {
