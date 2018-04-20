@@ -139,6 +139,8 @@ public class UseDll : MonoBehaviour
     [SerializeField]
     private int nbOutputClassificationRBF = 0;
 
+    [SerializeField]
+    private bool regression = false;
 
     // RBF Regression
     [SerializeField]
@@ -380,14 +382,14 @@ public class UseDll : MonoBehaviour
             if (this.TrainRBFClassifer || this.bufferWeightRBFClass == null)
             {
                 //IntPtr result = RunRBFNaiveTraining(gammaClassifierRBF, bufferInputs, bufferExpected, this.nbParameterClassifierRBF, nbSample, this.nbOutputClassificationRBF);
-                IntPtr result = RunRBFkMeansTraining(epsilon, nbCluster, gammaClassifierRBF, bufferInputs, bufferExpected, this.nbParameterClassifierRBF, nbSample, this.nbOutputClassificationRBF);
+                IntPtr result = RunRBFNaiveTraining(gammaClassifierRBF, bufferInputs, bufferExpected, this.nbParameterClassifierRBF, nbSample, this.nbOutputClassificationRBF);
                 float[] resultLinearClassifierTraining = new float[this.nbParameterClassifierRBF];
                 Marshal.Copy(result, resultLinearClassifierTraining, 0, this.nbParameterClassifierRBF * nbOutputClassificationRBF);
                 bufferWeightRBFClass = Marshal.AllocCoTaskMem(Marshal.SizeOf(resultLinearClassifierTraining.Length) * resultLinearClassifierTraining.Length);
                 float[] weights = new float[nbParameterClassifierRBF];
                 Marshal.Copy(weights, 0, bufferWeightRBFClass, weights.Length);
             }
-            /*
+
             float[] newPoint = new float[2];
             newPoint[0] = this.newPointRBFClassification.transform.position.x;
             newPoint[1] = this.newPointRBFClassification.transform.position.y;
@@ -395,9 +397,9 @@ public class UseDll : MonoBehaviour
             IntPtr bufferNewPoint = Marshal.AllocCoTaskMem(Marshal.SizeOf(newPoint.Length) * newPoint.Length);
             Marshal.Copy(newPoint, 0, bufferNewPoint, newPoint.Length);
 
-            IntPtr resultClass = RunRBFClassification(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFClass, nbParameterClassifierRBF, nbSample, nbOutputClassificationRBF);
-            float[] resultClassif = new float[nbOutputClassificationRBF];
-            Marshal.Copy(resultClass, resultClassif, 0, nbOutputClassificationRBF);
+            IntPtr resultClass = RunRBFClassification(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFClass, nbParameterRegressionRBF, 1, nbOutputRegressionRBF);
+            float[] resultClassif = new float[nbOutputRegressionRBF];
+            Marshal.Copy(resultClass, resultClassif, 0, nbOutputRegressionRBF);
 
             if (resultClassif[0] > 0.5f)
             {
@@ -406,7 +408,7 @@ public class UseDll : MonoBehaviour
             else
             {
                 Debug.Log("This is a cat !");
-            }*/
+            }
         }
         // Init Regression RBF
         else if (this.cubeRegressionRBF.Length > 0)
@@ -446,33 +448,36 @@ public class UseDll : MonoBehaviour
             IntPtr bufferNewPoint = Marshal.AllocCoTaskMem(Marshal.SizeOf(newPoint.Length) * newPoint.Length);
             Marshal.Copy(newPoint, 0, bufferNewPoint, newPoint.Length);
 
-            
-            IntPtr resultRegr = RunRBFRegression(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFRegr, nbParameterRegressionRBF, 1, nbOutputRegressionRBF);
-            float[] resultRegress = new float[nbOutputRegressionRBF];
-            Marshal.Copy(resultRegr, resultRegress, 0, nbOutputRegressionRBF);
-
-            if (resultRegress[0] < 0.5f)
+            if (regression)
             {
-                Debug.Log("This is a dog !");
+                IntPtr resultRegr = RunRBFRegression(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFRegr, nbParameterRegressionRBF, 1, nbOutputRegressionRBF);
+                float[] resultRegress = new float[nbOutputRegressionRBF];
+                Marshal.Copy(resultRegr, resultRegress, 0, nbOutputRegressionRBF);
+
+                if (resultRegress[0] < 0.5f)
+                {
+                    Debug.Log("This is a dog !");
+                }
+                else
+                {
+                    Debug.Log("This is a cat !");
+                }
             }
             else
             {
-                Debug.Log("This is a cat !");
-            }
-            
-            /*
-            IntPtr resultClass = RunRBFClassification(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFClass, nbParameterRegressionRBF, 1, nbOutputRegressionRBF);
-            float[] resultClassif = new float[nbOutputRegressionRBF];
-            Marshal.Copy(resultClass, resultClassif, 0, nbOutputRegressionRBF);
+                IntPtr resultClass = RunRBFClassification(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFClass, nbParameterRegressionRBF, 1, nbOutputRegressionRBF);
+                float[] resultClassif = new float[nbOutputRegressionRBF];
+                Marshal.Copy(resultClass, resultClassif, 0, nbOutputRegressionRBF);
 
-            if (resultClassif[0] > 0.5f)
-            {
-                Debug.Log("This is a dog !");
+                if (resultClassif[0] > 0.5f)
+                {
+                    Debug.Log("This is a dog !");
+                }
+                else
+                {
+                    Debug.Log("This is a cat !");
+                }
             }
-            else
-            {
-                Debug.Log("This is a cat !");
-            }*/
         }
         // MLP
         else if (this.cubeMLP.Length > 0)
