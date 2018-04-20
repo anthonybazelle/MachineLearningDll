@@ -605,66 +605,120 @@ extern "C" {
 
 		weights = phi.inverse() * outputs;
 
-		return weights.data();
+		std::ofstream logFile;
+		logFile.open("logRBFNaive.log");
+		logFile << "Size weights : " << weights.col(0).size() << std::endl;
+		float* resPointer = new float[weights.col(0).size()];
+		int it = 0;
+		for (int i = 0; i <weights.col(0).size(); ++i)
+		{
+			logFile << "Weights return (" << i << ", 0) : " << weights(i, 0) << std::endl;
+			resPointer[it] = weights(i, 0);
+			++it;
+		}
+
+		return resPointer;
 	}
 
 	float* RBFRegression(float gamma, float* inputs, float* data, float* weights, int nbParameters, int nbSamples, int nbOutputs)
 	{
+		std::ofstream logFile;
+		logFile.open("logFileRBFRegression.log");
+
+		logFile << "RBFRegression started" << std::endl << std::endl;
+
 		Eigen::MatrixXf dat(nbParameters, 1);
 		Eigen::MatrixXf X(nbSamples, nbParameters);
 		Eigen::MatrixXf W(nbSamples, nbOutputs);
 		Eigen::MatrixXf result(nbOutputs, 1);
 		float res, dist;
 
+		logFile << "BEFORE PointerToMatrix" << std::endl;
 		X = pointerToMatrix(inputs, nbSamples, nbParameters);
 		W = pointerToMatrix(weights, nbSamples, nbOutputs);
 		dat = pointerToMatrix(data, nbParameters, 1);
+		logFile << "AFTER PointerToMatrix" << std::endl;
 
 		for (int i = 0; i < nbOutputs; ++i)
 		{
+			logFile << "OutPut " << i << std::endl;
 			res = 0.f;
 			for (int j = 0; j < nbSamples; ++j)
 			{
+				logFile << "\nSample " << j << std::endl;
 				dist = 0.f;
 				for (int k = 0; k < nbParameters; ++k)
 				{
-					dist += pow(X(j, k) - dat(k, 1), 2);
+					logFile << "\n\nParameter " << k << std::endl;
+					auto teest = X(j, k) - dat(k, 0);
+					logFile << "\n\nAfter test " << k << std::endl;
+					dist += pow(X(j, k) - dat(k, 0), 2);
 				}
+				logFile << "\nSum res sample " << j << std::endl;
 				res += W(j, i) * exp(-gamma * dist);
 			}
-			result(i, 1) = res;
+
+			logFile << "Add res output " << i << std::endl;
+			result(i, 0) = res;
 		}
 
-		return result.data();
+		//float* result = result.data();
+
+		float* resu = new float[result.size()];
+		int it = 0;
+		for (int i = 0; i < result.rows(); ++i)
+		{
+			for (int j = 0; j < result.cols(); ++j)
+			{
+				resu[it] = result(i, j);
+				logFile << "Result " << i << " : " << resu[i] << std::endl;
+				++it;
+			}
+		}
+
+		return resu;
 	}
 
 	float* RBFClassification(float gamma, float* inputs, float* data, float* weights, int nbParameters, int nbSamples, int nbOutputs)
 	{
+		std::ofstream logFile;
+		logFile.open("logFileRBFClassif.log");
+		logFile << "RBFClassifier started" << std::endl << std::endl;
 		Eigen::MatrixXf dat(nbParameters, 1);
 		Eigen::MatrixXf X(nbSamples, nbParameters);
 		Eigen::MatrixXf W(nbSamples, nbOutputs);
 		Eigen::MatrixXf result(nbOutputs, 1);
 		float res, dist;
 
+		logFile << "BEFORE PointerToMatrix" << std::endl;
 		X = pointerToMatrix(inputs, nbSamples, nbParameters);
 		W = pointerToMatrix(weights, nbSamples, nbOutputs);
 		dat = pointerToMatrix(data, nbParameters, 1);
+		logFile << "AFTER PointerToMatrix" << std::endl;
 
 		for (int i = 0; i < nbOutputs; ++i)
 		{
+			logFile << "OutPut " << i << std::endl;
 			res = 0.f;
 			for (int j = 0; j < nbSamples; ++j)
 			{
+				logFile << "\nSample " << j << std::endl;
 				dist = 0.f;
 				for (int k = 0; k < nbParameters; ++k)
 				{
-					dist += pow(X(j, k) - dat(k, 1), 2);
+					logFile << "\n\nParameter " << k << std::endl;
+					auto teest = X(j, k) - dat(k, 0);
+					logFile << "\n\nAfter test " << k << std::endl;
+					dist += pow(X(j, k) - dat(k, 0), 2);
 				}
+				logFile << "\nSum res sample " << j << std::endl;
 				res += W(j, i) * exp(-gamma * dist);
 			}
-			result(i, 1) = res < 0.f ? -1.f : res > 0.f ? 1.f : 0.f;
+			logFile << "Add res output " << i << std::endl;
+			result(i, 0) = res < 0.f ? -1.f : res > 0.f ? 1.f : 0.f;
 		}
-
+		
+		//result.size();
 		return result.data();
 	}
 
@@ -831,6 +885,35 @@ extern "C" {
 
 		Eigen::MatrixXf result(weights.rows() + rpzVector.rows(), weights.cols());
 
+		std::ofstream logFile;
+		logFile.open("logRBFKMeansTraining.log");
+
+		logFile << result.size() << std::endl;
+
+		for (int i = 0; i < result.rows(); ++i)
+		{
+			for (int j = 0; j < result.cols(); ++j)
+			{
+				logFile << "Return value : " << result(i, j) << std::endl;
+			}
+		}
+
+		float* f = result.data();
+		for (int i = 0; i < result.size(); i++)
+		{
+			logFile << "Weights : " << f[i] << std::endl;
+		}
+
+		//Eigen::VectorXd B(Eigen::Map<Eigen::VectorXd>((double*)result.data(), result.cols()*result.rows()));
+		std::vector<float> vec(result.data(), result.data() + result.rows() * result.cols());
+
+		logFile << std::endl << "AFTER CONVERT TO STD::VECTOR" << std::endl;
+		for (int i = 0; i < vec.size(); i++)
+		{
+			logFile << "Weights : " << vec[i] << std::endl;
+		}
+
+		//std::vector<double> res = B;
 		return result.data();
 	}
 
@@ -1089,7 +1172,7 @@ extern "C" {
 	{
 		//std::ofstream logFile;
 		//logFile.open("logFileDll.log");
-		logFile << "HELLO MLP 1" << std::endl;
+		logFile << "INITIALIZE NETWORK" << std::endl;
 		int res = 0;
 		std::vector<int> neuronsPerLayer;
 		for (int i = 0; i < nbLayer; ++i)
@@ -1098,7 +1181,6 @@ extern "C" {
 			logFile << "Nb neurons for layer " << i << " : " << neuronsPerLayerArray[i] << std::endl;
 		}
 		logFile << "Size neuronsPerLayer : " << neuronsPerLayer.size() << std::endl;
-		logFile << "HELLO MLP 2" << std::endl;
 
 		ConstructorNeuralNetwork(neuronsPerLayer.size(), layers);
 		logFile << "Size layers : " << layers.size() << std::endl;
@@ -1113,7 +1195,7 @@ extern "C" {
 
 		//if(verboseMode == 1)
 
-		logFile << "NB Layers : " << layers.size() << std::endl;
+		logFile << "Nb Layers : " << layers.size() << std::endl;
 		for (int i = 0; i < layers.size(); ++i)
 		{
 			logFile << layers[i].size() << std::endl;
@@ -1191,6 +1273,7 @@ extern "C" {
 			//if (verboseMode == 1)
 			//	PrintAll(logFile, "INITIALIZATION MLP DONE");
 			//	logFile.close();
+			logFile << "INITIALIZE NETWORK DONE" << std::endl;
 			return 0;
 		}
 		catch (std::exception &e)
@@ -1379,7 +1462,7 @@ extern "C" {
 
 		if (resInit == -1)
 		{
-			std::cout << "ERROR INIT" << std::endl;
+			logFile << "ERROR INIT" << std::endl;
 		}
 
 		switch (activateFunc)
@@ -1432,13 +1515,21 @@ extern "C" {
 			}
 		}
 
-		return resultWeights.data();
+		float* result = new float[resultWeights.size()];
+
+		for (int i = 0; i < resultWeights.size(); i++)
+		{
+			result[i] = resultWeights[i];
+			logFile << "Weight " << i << " : " << result[i] << std::endl;
+		}
+
+		return result;
 	}
 
 	float* PredictMLP(float* inputs, float* W, int nbInputParam, int* neuronsPerLayerArray, int nbLayer, int activateFunc)
 	{
 		std::ofstream logFile;
-		logFile.open("logFileDll.log");
+		logFile.open("logFileDllTest.log");
 		logFile << "Start Predict" << std::endl;
 
 		std::vector<std::vector<float>> values;
@@ -1528,14 +1619,27 @@ extern "C" {
 			}
 
 			//if (verboseMode == 1)
-			//	PrintAll(logFile, "PROPAGATION DONE");
+				PrintAll(logFile, "RESULT :", weights, values);
 			//	logFile.close();
 
 
 			logFile << "Size return predict array : " << values[values.size() - 1].size() << std::endl;
+			
+			for (int i = 0; i < values[values.size() - 1].size(); ++i)
+			{
+				logFile << "Value param " << i << " : " << values[values.size() - 1][i] << std::endl;
+			}				
+
 			logFile.close();
 
-			return values[values.size() - 1].data();
+			float* result = new float[values[values.size() - 1].size()];
+			for (int i = 0; i < values[values.size() - 1].size(); ++i)
+			{
+				logFile << "Result MLP paramOutput " << i << " : " << values[values.size() - 1][i] << std::endl;
+				result[i] = values[values.size() - 1][i];
+			}
+
+			return result;
 		}
 		else
 		{

@@ -42,7 +42,7 @@ RenderSettings:
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 11
+  serializedVersion: 9
   m_GIWorkflowMode: 1
   m_GISettings:
     serializedVersion: 2
@@ -54,7 +54,7 @@ LightmapSettings:
     m_EnableBakedLightmaps: 1
     m_EnableRealtimeLightmaps: 1
   m_LightmapEditorSettings:
-    serializedVersion: 9
+    serializedVersion: 8
     m_Resolution: 2
     m_BakeResolution: 40
     m_TextureWidth: 1024
@@ -87,7 +87,7 @@ LightmapSettings:
     m_PVRFilteringAtrousNormalSigma: 1
     m_PVRFilteringAtrousPositionSigma: 1
   m_LightingDataAsset: {fileID: 0}
-  m_UseShadowmask: 1
+  m_ShadowMaskMode: 2
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -203,7 +203,7 @@ GameObject:
   - component: {fileID: 71387741}
   m_Layer: 0
   m_Name: Cube (4)
-  m_TagString: -1
+  m_TagString: 0
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -367,7 +367,7 @@ GameObject:
   - component: {fileID: 292952875}
   m_Layer: 0
   m_Name: Cube (7)
-  m_TagString: -1
+  m_TagString: 0
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -531,7 +531,7 @@ GameObject:
   - component: {fileID: 394472169}
   m_Layer: 0
   m_Name: Cube
-  m_TagString: -1
+  m_TagString: 0
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -613,7 +613,7 @@ GameObject:
   - component: {fileID: 429828127}
   m_Layer: 0
   m_Name: Cube (1)
-  m_TagString: -1
+  m_TagString: 0
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -695,7 +695,7 @@ GameObject:
   - component: {fileID: 625981099}
   m_Layer: 0
   m_Name: Cube (3)
-  m_TagString: -1
+  m_TagString: 0
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -791,6 +791,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 964ec70b285601d4a91793d0944caa9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  verboseMode: 0
   cubeRegression: []
   cubeRegressionPI: []
   nbParameterRegressionPI: 2
@@ -799,6 +800,19 @@ MonoBehaviour:
   stepLearningClassifierRosenblatt: 0.001
   nbIterationClassifierRosenblatt: 1000
   toleranceClassifierRosenblatt: 0.001
+  cubeMLP: []
+  nbInputParameterMLP: 0
+  nbOutputParameterMLP: 0
+  errorMLP: 0.05
+  nbIterationMLP: 100
+  initWeightMLP: 0.5
+  biasValueMLP: 1
+  activateFuncMLP: 0
+  nbNeuronPerLayerMLP: 
+  verboseModeMLP: 0
+  nbClasses: 3
+  goToTest: {fileID: 0}
+  matGoToTest: {fileID: 0}
   nbCluster: 2
   epsilon: 0
   cubeClassifierRBF:
@@ -821,34 +835,16 @@ MonoBehaviour:
   - {fileID: 292952873}
   - {fileID: 1079413401}
   TrainRBFClassifer: 1
-  newPointRBFClassification: {fileID: 0}
+  newPointRBFClassification: {fileID: 1577515751}
   nbParameterClassifierRBF: 2
-  gammaClassifierRBF: 0
-  nbOutputClassificationRBF: 0
-  cubeRegressionRBF:
-  - {fileID: 394472167}
-  - {fileID: 429828125}
-  - {fileID: 1371870487}
-  - {fileID: 625981097}
-  - {fileID: 71387739}
-  - {fileID: 1891046550}
-  - {fileID: 1974483422}
-  - {fileID: 292952873}
-  - {fileID: 1079413401}
-  - {fileID: 1851544376}
-  - {fileID: 60100778}
-  - {fileID: 1395884390}
-  - {fileID: 1784082620}
-  - {fileID: 190635783}
-  - {fileID: 307779015}
-  - {fileID: 1415426080}
-  - {fileID: 1518828933}
-  - {fileID: 917894414}
-  TrainRBFRegression: 1
+  gammaClassifierRBF: 0.1
+  nbOutputClassificationRBF: 1
+  cubeRegressionRBF: []
+  TrainRBFRegression: 0
   newPointRBFRegression: {fileID: 0}
   nbParameterRegressionRBF: 2
   gammaRegressionRBF: 0
-  nbOutputRegressionRBF: 0
+  nbOutputRegressionRBF: 1
   cubeClassifierPLA: []
   nbParameterClassifierPLA: 2
   stepLearningClassifierPLA: 0.001
@@ -865,7 +861,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &917894414
 GameObject:
@@ -962,7 +958,7 @@ GameObject:
   - component: {fileID: 1079413403}
   m_Layer: 0
   m_Name: Cube (8)
-  m_TagString: -1
+  m_TagString: 0
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1066,7 +1062,7 @@ Transform:
   - {fileID: 292952874}
   - {fileID: 1079413402}
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -114.578}
 --- !u!1 &1335962688
 GameObject:
@@ -1102,8 +1098,9 @@ Transform:
   - {fileID: 1415426081}
   - {fileID: 1518828934}
   - {fileID: 917894415}
+  - {fileID: 1577515755}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -114.578}
 --- !u!1 &1371870487
 GameObject:
@@ -1118,7 +1115,7 @@ GameObject:
   - component: {fileID: 1371870489}
   m_Layer: 0
   m_Name: Cube (2)
-  m_TagString: -1
+  m_TagString: 0
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1498,6 +1495,88 @@ MeshFilter:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1518828933}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1577515751
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 1577515755}
+  - component: {fileID: 1577515754}
+  - component: {fileID: 1577515753}
+  - component: {fileID: 1577515752}
+  m_Layer: 0
+  m_Name: CubeTestDLL
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!23 &1577515752
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1577515751}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+--- !u!65 &1577515753
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1577515751}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!33 &1577515754
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1577515751}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1577515755
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1577515751}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 12.68, y: 5.86, z: 0}
+  m_LocalScale: {x: 0.5788002, y: 0.6088802, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1335962689}
+  m_RootOrder: 9
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1784082620
 GameObject:
   m_ObjectHideFlags: 0
@@ -1675,7 +1754,7 @@ GameObject:
   - component: {fileID: 1891046552}
   m_Layer: 0
   m_Name: Cube (5)
-  m_TagString: -1
+  m_TagString: 0
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1757,7 +1836,7 @@ GameObject:
   - component: {fileID: 1974483424}
   m_Layer: 0
   m_Name: Cube (6)
-  m_TagString: -1
+  m_TagString: 0
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

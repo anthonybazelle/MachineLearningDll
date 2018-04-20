@@ -195,7 +195,7 @@ public class UseDll : MonoBehaviour
     private IntPtr bufferWeightRBFRegr;
 
     private bool alreadyTestedMLP;
-    private float[] resultWeightMLP;
+    private float[] allMLPWeight;
     #endregion
 
 
@@ -379,14 +379,15 @@ public class UseDll : MonoBehaviour
 
             if (this.TrainRBFClassifer || this.bufferWeightRBFClass == null)
             {
-                IntPtr result = RunRBFNaiveTraining(gammaClassifierRBF, bufferInputs, bufferExpected, this.nbParameterClassifierRBF, nbSample, this.nbOutputClassificationRBF);
+                //IntPtr result = RunRBFNaiveTraining(gammaClassifierRBF, bufferInputs, bufferExpected, this.nbParameterClassifierRBF, nbSample, this.nbOutputClassificationRBF);
+                IntPtr result = RunRBFkMeansTraining(epsilon, nbCluster, gammaClassifierRBF, bufferInputs, bufferExpected, this.nbParameterClassifierRBF, nbSample, this.nbOutputClassificationRBF);
                 float[] resultLinearClassifierTraining = new float[this.nbParameterClassifierRBF];
                 Marshal.Copy(result, resultLinearClassifierTraining, 0, this.nbParameterClassifierRBF * nbOutputClassificationRBF);
                 bufferWeightRBFClass = Marshal.AllocCoTaskMem(Marshal.SizeOf(resultLinearClassifierTraining.Length) * resultLinearClassifierTraining.Length);
                 float[] weights = new float[nbParameterClassifierRBF];
                 Marshal.Copy(weights, 0, bufferWeightRBFClass, weights.Length);
             }
-
+            /*
             float[] newPoint = new float[2];
             newPoint[0] = this.newPointRBFClassification.transform.position.x;
             newPoint[1] = this.newPointRBFClassification.transform.position.y;
@@ -397,6 +398,15 @@ public class UseDll : MonoBehaviour
             IntPtr resultClass = RunRBFClassification(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFClass, nbParameterClassifierRBF, nbSample, nbOutputClassificationRBF);
             float[] resultClassif = new float[nbOutputClassificationRBF];
             Marshal.Copy(resultClass, resultClassif, 0, nbOutputClassificationRBF);
+
+            if (resultClassif[0] > 0.5f)
+            {
+                Debug.Log("This is a dog !");
+            }
+            else
+            {
+                Debug.Log("This is a cat !");
+            }*/
         }
         // Init Regression RBF
         else if (this.cubeRegressionRBF.Length > 0)
@@ -422,11 +432,11 @@ public class UseDll : MonoBehaviour
             if (this.TrainRBFRegression || this.bufferWeightRBFRegr == null)
             {
                 IntPtr result = RunRBFNaiveTraining(gammaRegressionRBF, bufferInputs, bufferExpected, this.nbParameterRegressionRBF, nbSample, this.nbOutputRegressionRBF);
-                float[] resultLinearRegressionTraining = new float[this.nbParameterRegressionRBF];
-                Marshal.Copy(result, resultLinearRegressionTraining, 0, this.nbParameterRegressionRBF * nbOutputRegressionRBF);
+                float[] resultLinearRegressionTraining = new float[nbSample];
+                Marshal.Copy(result, resultLinearRegressionTraining, 0, nbSample);
+
                 bufferWeightRBFRegr = Marshal.AllocCoTaskMem(Marshal.SizeOf(resultLinearRegressionTraining.Length) * resultLinearRegressionTraining.Length);
-                float[] weights = new float[nbParameterRegressionRBF];
-                Marshal.Copy(weights, 0, bufferWeightRBFRegr, weights.Length);
+                Marshal.Copy(resultLinearRegressionTraining, 0, bufferWeightRBFRegr, resultLinearRegressionTraining.Length);
             }
 
             float[] newPoint = new float[2];
@@ -436,9 +446,33 @@ public class UseDll : MonoBehaviour
             IntPtr bufferNewPoint = Marshal.AllocCoTaskMem(Marshal.SizeOf(newPoint.Length) * newPoint.Length);
             Marshal.Copy(newPoint, 0, bufferNewPoint, newPoint.Length);
 
-            IntPtr resultRegr = RunRBFRegression(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFClass, nbParameterClassifierRBF, nbSample, nbOutputClassificationRBF);
+            
+            IntPtr resultRegr = RunRBFRegression(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFRegr, nbParameterRegressionRBF, 1, nbOutputRegressionRBF);
             float[] resultRegress = new float[nbOutputRegressionRBF];
             Marshal.Copy(resultRegr, resultRegress, 0, nbOutputRegressionRBF);
+
+            if (resultRegress[0] < 0.5f)
+            {
+                Debug.Log("This is a dog !");
+            }
+            else
+            {
+                Debug.Log("This is a cat !");
+            }
+            
+            /*
+            IntPtr resultClass = RunRBFClassification(gammaClassifierRBF, bufferInputs, bufferNewPoint, bufferWeightRBFClass, nbParameterRegressionRBF, 1, nbOutputRegressionRBF);
+            float[] resultClassif = new float[nbOutputRegressionRBF];
+            Marshal.Copy(resultClass, resultClassif, 0, nbOutputRegressionRBF);
+
+            if (resultClassif[0] > 0.5f)
+            {
+                Debug.Log("This is a dog !");
+            }
+            else
+            {
+                Debug.Log("This is a cat !");
+            }*/
         }
         // MLP
         else if (this.cubeMLP.Length > 0)
@@ -499,6 +533,7 @@ public class UseDll : MonoBehaviour
             float[] resultWeightMLPPPP = new float[63];
             Marshal.Copy(resultWeights, resultWeightMLPPPP, 0, 63);
 
+            allMLPWeight = resultWeightMLPPPP;
             int u = 0;
         }
     }
@@ -547,8 +582,8 @@ public class UseDll : MonoBehaviour
             IntPtr bufferNeuronsPerLayer = Marshal.AllocCoTaskMem(Marshal.SizeOf(nbNeuronPerLayerMLP.Length) * nbNeuronPerLayerMLP.Length);
             Marshal.Copy(nbNeuronPerLayerMLP, 0, bufferNeuronsPerLayer, nbNeuronPerLayerMLP.Length);
 
-            IntPtr bufferResultWeightMLP = Marshal.AllocCoTaskMem(Marshal.SizeOf(resultWeightMLP.Length) * resultWeightMLP.Length);
-            Marshal.Copy(resultWeightMLP, 0, bufferResultWeightMLP, resultWeightMLP.Length);
+            IntPtr bufferResultWeightMLP = Marshal.AllocCoTaskMem(Marshal.SizeOf(allMLPWeight.Length) * allMLPWeight.Length);
+            Marshal.Copy(allMLPWeight, 0, bufferResultWeightMLP, allMLPWeight.Length);
 
             float[] inputToTest = new float[nbInputParameterMLP];
             IntPtr bufferInputToTestMLP = Marshal.AllocCoTaskMem(Marshal.SizeOf(inputToTest.Length) * inputToTest.Length);
@@ -575,16 +610,20 @@ public class UseDll : MonoBehaviour
             switch (indiceMax)
             {
                 case 0:
-                    matGoToTest.color = Color.red;
+                    //matGoToTest.color = Color.red;
+                    Debug.Log("I'm RED !");
                     break;
                 case 1:
-                    matGoToTest.color = Color.green;
+                    //matGoToTest.color = Color.green;
+                    Debug.Log("I'm GREEN !");
                     break;
                 case 2:
-                    matGoToTest.color = Color.blue;
+                    //matGoToTest.color = Color.blue;
+                    Debug.Log("I'm BLUE !");
                     break;
                 default:
-                    matGoToTest.color = Color.white;
+                    //matGoToTest.color = Color.white;
+                    Debug.Log("I'm WHITE !");
                     break;
             }
         }
